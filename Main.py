@@ -10,6 +10,7 @@ Main File, here to combine the main functions of the code.
 '''
 from PIL import Image
 from matplotlib import pyplot as plt
+import face_replacement as face_rep
 import imageio
 
 
@@ -21,4 +22,6 @@ outVideo = imageio.get_writer("resources/testOutput.mp4", fps=video1._meta['fps'
 
 frames = video1._meta['nframes']
 prev_frame = video1.get_next_data()
+
+cascade = face_rep.detect_faces(prev_frame)
 

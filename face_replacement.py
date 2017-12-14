@@ -29,7 +29,12 @@ def face_replacement(source_vid, target_vid):
     replacement_faces_ims = [resize(face, (h, w)) for face, (x,y, w,h)
                          in zip(replacement_faces_ims, target_faces)]
     for (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
-        replacement_image[y:y+h, x:x+w, :] = (face * 255).astype(np.uint8)
-
+        #replacement_image[y:y+h, x:x+w, :] =
+        src = (face * 255).astype(np.uint8)
+        mask = np.zeros(face.shape, dtype=np.uint8)
+        center = (y + (h//2), x + (w//2))
+        replacement_image = cv2.seamlessClone(
+            src, replacement_image.astype(np.uint8), mask, center, cv2.NORMAL_CLONE)
     plt.imshow(replacement_image)
+
     plt.show()

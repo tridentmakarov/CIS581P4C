@@ -8,7 +8,11 @@ Main File, here to combine the main functions of the code.
 4) Alignment
 
 '''
+from PIL import Image
+from matplotlib import pyplot as plt
+from extractFrames import extractFrames
 
 
+img = extractFrames("barack-obama-eye-roll.gif", "resources")
 
-img = []
+plt.imshow(img[1])

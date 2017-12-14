@@ -10,9 +10,15 @@ Main File, here to combine the main functions of the code.
 '''
 from PIL import Image
 from matplotlib import pyplot as plt
-from extractFrames import extractFrames
+import imageio
 
 
-img = Image.open("resources/barack-obama-eye-roll.gif")
+video1 = imageio.get_reader("resources/MarquesBrownlee.mp4")
+video2 = imageio.get_reader("resources/TheMartian.mp4")
 
-plt.imshow(img[1])
+
+outVideo = imageio.get_writer("resources/testOutput.mp4", fps=video1._meta['fps'])
+
+frames = video1._meta['nframes']
+prev_frame = video1.get_next_data()
+

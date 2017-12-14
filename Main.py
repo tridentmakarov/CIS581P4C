@@ -13,6 +13,6 @@ from matplotlib import pyplot as plt
 from extractFrames import extractFrames
 
 
-img = extractFrames("barack-obama-eye-roll.gif", "resources")
+img = Image.open("resources/barack-obama-eye-roll.gif")
 
 plt.imshow(img[1])

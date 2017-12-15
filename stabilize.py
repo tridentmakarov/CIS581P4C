@@ -31,3 +31,4 @@ def stabilize(source, output, nFrames):
     points = cv2.cornerHarris(frame1Gray[x: x + w, y: y + h], 3, 3, 0.04)
 
     plt.imshow(videoFrame)
+    #plt.show()

@@ -27,16 +27,33 @@ def face_replacement(source_vid, target_vid):
                          in zip(replacement_faces_ims, target_faces)]
 
     gray = cv2.cvtColor(np.uint8(replacement_faces_ims[0]*255), cv2.COLOR_BGR2GRAY)
-    points = cv2.goodFeaturesToTrack(gray, 50, 0.01, 20, mask=None, useHarrisDetector=False, blockSize=3, k=0.04)
+    oldPoints = cv2.goodFeaturesToTrack(gray, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
+    print oldPoints.shape
+    plt.imshow(np.uint8(replacement_faces_ims[0] * 255))
+    plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
 
+    plt.show()
 
-    for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
-        face_im = (face * 255).astype(np.uint8)
-        replacement_image[y:y+h, x:x+w, :] = face_im
+    oldFrame = source
 
+    for i, frame in enumerate(source_vid):
+        frame = frame
+        if i!=0:
+            newPoints,  st, err = cv2.calcOpticalFlowPyrLK(oldFrame, frame, oldPoints, None)
+            goodNew = newPoints[st]
+            goodOld = oldPoints[st]
 
-        points = cv2.calcOpticalFlowPyrLK()
+            oldPoints = newPoints
+
+        oldFrame = frame
+
+    # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
+    #     face_im = (face * 255).astype(np.uint8)
+    #     replacement_image[y:y+h, x:x+w, :] = face_im
+    #
+    #
+    #     points = cv2.calcOpticalFlowPyrLK()
 
 
 

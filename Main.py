@@ -25,7 +25,7 @@ face_replacement.face_replacement(video1, video2)
 
 outVideo = imageio.get_writer("resources/testOutput.mp4", fps=video1._meta['fps'])
 
-nFrames = video1._meta['nframes']
+
 prev_frame = video1.get_next_data()
 
 cascade = face_rep.detect_faces(prev_frame)

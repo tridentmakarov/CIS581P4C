@@ -17,24 +17,27 @@ def face_replacement(source_vid, target_vid):
     if source_faces.size == 0 or target_faces.size == 0:
         raise ValueError("Face could not be detected in source image")
 
-    replacement_image = target.copy()
-
-
-    # mask = np.zeros(replacement_image.shape)
-    # for (x,y,w,h) in target_faces:
-    #     replacement_image[y:y+h, x:x+w] = 0
-    #     mask[y:y+h, x:x+w] = 1
+    replacement_image = np.zeros(target.shape, dtype=np.uint8)
 
     replacement_faces_ims = [source[y:y+h, x:x+w] for (x,y,w,h) in source_faces]
     replacement_faces_ims = [resize(face, (h, w)) for face, (x,y, w,h)
                          in zip(replacement_faces_ims, target_faces)]
-    for (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
-        #replacement_image[y:y+h, x:x+w, :] =
-        src = (face * 255).astype(np.uint8)
-        mask = np.zeros(face.shape, dtype=np.uint8)
-        center = (y + (h//2), x + (w//2))
-        replacement_image = cv2.seamlessClone(
-            src, replacement_image.astype(np.uint8), mask, center, cv2.NORMAL_CLONE)
-    plt.imshow(replacement_image)
 
-    plt.show()
+    for (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
+        face_im = (face * 255).astype(np.uint8)
+        replacement_image[y:y+h, x:x+w, :] = face_im
+
+
+
+def find_foreground(im, rect):
+    (x, y, w, h) = rect
+    mask = np.zeros(im.shape[:2])
+    bgdModel = np.zeros((1, 65), np.float64)
+    fgdModel = np.zeros((1, 65), np.float64)
+    cv2.grabCut(im, mask, (x, y, x + w, y + h),
+                bgdModel, fgdModel, 1, mode=cv2.GC_INIT_WITH_RECT)
+
+    mask[(mask != cv2.GC_PR_FGD) & (mask != cv2.GC_FGD)] = 0
+    mask = mask.astype(bool)
+
+    return mask

@@ -22,7 +22,7 @@ def face_replacement(source_vid, target_vid):
 
     replacement_image = np.zeros(target.shape, dtype=np.uint8)
 
-    replacement_faces_ims = [source[y:y+h, x:x+w] for (x,y,w,h) in source_faces]
+    replacement_faces_ims = [source[y:y+h, x:x+w] for (x, y, w, h) in source_faces]
     replacement_faces_ims = [resize(face, (h, w)) for face, (x,y, w,h)
                          in zip(replacement_faces_ims, target_faces)]
 

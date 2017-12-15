@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 
 def stabilize(source, output, nFrames):
 
-    video1 = imageio.get_reader("resources/MarquesBrownlee.mp4")
 
-    frame1 = video1.get_next_data()
+
+    frame1 = source.get_next_data()
     frame1Gray = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 
     bbox = face_rep.detect_faces(frame1)
@@ -28,6 +28,6 @@ def stabilize(source, output, nFrames):
     # plt.imshow(videoFrame)
     # plt.show()
 
-    points = cv2.cornerHarris(frame1Gray[x: x + w, y: y + h], 3, 3, 0.04 )
+    points = cv2.cornerHarris(frame1Gray[x: x + w, y: y + h], 3, 3, 0.04)
 
     plt.imshow(videoFrame)

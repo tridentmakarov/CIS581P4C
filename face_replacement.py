@@ -26,14 +26,17 @@ def face_replacement(source_vid, target_vid):
     replacement_faces_ims = [resize(face, (h, w)) for face, (x,y, w,h)
                          in zip(replacement_faces_ims, target_faces)]
 
-    plotbboxPolygon = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
-    points = cv2.goodFeaturesToTrack(np.array(replacement_faces_ims), 50, 0.01, 20, mask=plotbboxPolygon, useHarrisDetector=False, blockSize=3, k=0.04, gradientSize = 2)
+    gray = cv2.cvtColor(np.uint8(replacement_faces_ims[0]*255), cv2.COLOR_BGR2GRAY)
+    points = cv2.goodFeaturesToTrack(gray, 50, 0.01, 20, mask=None, useHarrisDetector=False, blockSize=3, k=0.04)
 
 
 
-    for (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
+    for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
         face_im = (face * 255).astype(np.uint8)
         replacement_image[y:y+h, x:x+w, :] = face_im
+
+
+        points = cv2.calcOpticalFlowPyrLK()
 
 
 

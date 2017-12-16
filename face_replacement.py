@@ -27,8 +27,10 @@ def face_replacement(source_vid, target_vid):
     replacement_faces_ims_target = [resize(face, (hR, wR)) for face, (xR,yR, wR,hR)
                          in zip(replacement_faces_ims_source, target_faces)]
 
-    bboxPolygonSource = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
-    bboxPolygonTarget = np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]])
+    bboxPolygonsSource = [np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]]) for (x, y, w, h) in source_faces]
+    bboxPolygonsTarget = [np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]]) for (xR,yR, wR,hR) in target_faces]
+    bboxPolygonSource = bboxPolygonsSource[0]
+    bboxPolygonTarget = bboxPolygonsTarget[0]
     old = bboxPolygonTarget
 
     graySource = cv2.cvtColor(np.uint8(replacement_faces_ims_source[0]*255), cv2.COLOR_BGR2GRAY)

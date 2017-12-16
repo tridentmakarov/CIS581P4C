@@ -55,18 +55,21 @@ def face_replacement(source_vid, target_vid):
             oldPoints = goodOld.reshape(-1, 1, 2)
             tform3 = tf.ProjectiveTransform()
             tform3.estimate(oldPoints[:,0, :], newPoints[:,0, :])
-            matrix = tform3._inv_matrix
-            out = np.dot(matrix, np.transpose(np.hstack([bboxPolygon, np.ones([int(bboxPolygon.shape[0]),1])])))
-            print out
-            bboxPolygon = np.round(np.transpose(np.vstack([out[0, :] / out[2, :], out[1, :] / out[2, :]]))).astype(np.int)
-            print bboxPolygon
-            pts = bboxPolygon.reshape((-1, 1, 2))
-            videoFrame = cv2.polylines(frame, [pts], True, (0, 255, 255))
-            plt.imshow(videoFrame)
-            plt.show()
-            # plt.imshow(newFrame)
-            # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
+            newFrame = tf.warp(newFrame, tform3, output_shape=newFrame.shape)
+
+            # matrix = tform3._inv_matrix
+
+            # out = np.dot(matrix, np.transpose(np.hstack([bboxPolygon, np.ones([int(bboxPolygon.shape[0]),1])])))
+            # print out
+            # bboxPolygon = np.round(np.transpose(np.vstack([out[0, :] / out[2, :], out[1, :] / out[2, :]]))).astype(np.int)
+            # print bboxPolygon
+            # pts = bboxPolygon.reshape((-1, 1, 2))
+            # videoFrame = cv2.polylines(frame, [pts], True, (0, 255, 255))
+            # plt.imshow(videoFrame)
             # plt.show()
+            plt.imshow(newFrame)
+            plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
+            plt.show()
         oldFrame = newFrame
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):

@@ -55,21 +55,19 @@ def face_replacement(source_vid, target_vid):
             oldPoints = goodOld.reshape(-1, 1, 2)
             tform3 = tf.ProjectiveTransform()
             tform3.estimate(oldPoints[:,0, :], newPoints[:,0, :])
-            newFrame = tf.warp(newFrame, tform3, output_shape=newFrame.shape)
+            matrix = tform3._inv_matrix
 
-            # matrix = tform3._inv_matrix
-
-            # out = np.dot(matrix, np.transpose(np.hstack([bboxPolygon, np.ones([int(bboxPolygon.shape[0]),1])])))
+            bboxOut = forwardAffineTransform(matrix, np.array(bboxPolygon[:, 0], ndmin=2), np.array(bboxPolygon[:, 1], ndmin=2))
             # print out
-            # bboxPolygon = np.round(np.transpose(np.vstack([out[0, :] / out[2, :], out[1, :] / out[2, :]]))).astype(np.int)
+            bboxPolygon = np.hstack([bboxOut[0], bboxOut[1]])
             # print bboxPolygon
-            # pts = bboxPolygon.reshape((-1, 1, 2))
-            # videoFrame = cv2.polylines(frame, [pts], True, (0, 255, 255))
-            # plt.imshow(videoFrame)
-            # plt.show()
-            plt.imshow(newFrame)
-            plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
+            pts = np.round(bboxPolygon.reshape((-1, 1, 2))).astype(np.int32)
+            videoFrame = cv2.polylines(frame, [pts], True, (0, 255, 255))
+            plt.imshow(videoFrame)
             plt.show()
+            # plt.imshow(newFrame)
+            # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
+            # plt.show()
         oldFrame = newFrame
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
@@ -94,4 +92,19 @@ def find_foreground(im, rect):
     mask = mask.astype(bool)
 
     return mask
+
+def forwardAffineTransform(T,v1,v2):
+    v1 = np.transpose(v1)
+    v2 = np.transpose(v2)
+
+    vecSize = v1.shape[0]
+
+    concVec = np.concatenate((v1,v2), axis=1)
+    onesVec = np.ones((concVec.shape[0],1))
+
+    U = np.concatenate((concVec,onesVec), axis=1)
+
+    retMat = np.dot(U,T[:,0:2])
+
+    return (retMat[:,0].reshape((vecSize,1)), retMat[:,1].reshape((vecSize,1)))
 

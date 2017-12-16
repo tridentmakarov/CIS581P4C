@@ -5,16 +5,24 @@ import scipy.sparse as sparse
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 
-def modified_poisson_blending(source, target, mask, originalTarget, x_corner, y_corner):
-    source /= 255.0
+def modified_poisson_blending(source_face, target, mask, originalTarget, x_corner, y_corner):
+    source_face /= 255.0
     target /= 255.0
     mask /= 255.0
 
-    F = np.zeros(source.shape)
+    F = np.zeros(source_face.shape)
+    for i in range(3):
+        F[:,:,i] = poisson_gray(source_face[:,:,i], target[:,:,i], mask)
+    np.logical_not(mask, out=mask)
 
-    F = 1 - F
+    for i in range(3):
+        F[:,:,i] = poisson_gray(target[:,:,i], F[:,:,i], mask)
 
-    return output_img
+    modified_img =  target.copy()
+    modified_img[y_corner:y_corner + source_face.shape[0],
+                y_corner:y_corner + source_face.shape[0],:] = (F * 255).astype(np.uint8)
+
+    return
 
 
 # Poisson blending using http://vacation.aid.design.kyushu-u.ac.jp/and/poisson/

@@ -21,21 +21,24 @@ def face_replacement(source_vid, target_vid):
     if source_faces.size == 0 or target_faces.size == 0:
         raise ValueError("Face could not be detected in source image")
 
-    replacement_image = np.zeros(target.shape, dtype=np.uint8)
+    (x,y,w,h) = source_faces[0]
+    #replacement_image = np.zeros(target.shape, dtype=np.uint8)
 
-    replacement_faces_ims_source = [source[y:y+h, x:x+w] for (x, y, w, h) in source_faces]
-    replacement_faces_ims_target = [resize(face, (hR, wR)) for face, (xR,yR, wR,hR)
-                         in zip(replacement_faces_ims_source, target_faces)]
+    #replacement_faces_ims_source = [source[y:y+h, x:x+w] for (x, y, w, h) in source_faces]
+    replacement_face = source[y:y+h, x:x+w]
+    replacement_faces_ims_target = [resize(replacement_face, (hR, wR)) for (xR,yR, wR,hR)
+                         in target_faces]
 
     bboxPolygonsSource = [np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]]) for (x, y, w, h) in source_faces]
     bboxPolygonsTarget = [np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]]) for (xR,yR, wR,hR) in target_faces]
     bboxPolygonSource = bboxPolygonsSource[0]
-    bboxPolygonTarget = bboxPolygonsTarget[0]
-    old = bboxPolygonTarget
+    #bboxPolygonTarget = bboxPolygonsTarget[0]
+    old_bboxes = bboxPolygonsTarget
 
-    graySource = cv2.cvtColor(np.uint8(replacement_faces_ims_source[0]*255), cv2.COLOR_BGR2GRAY)
+
+    #graySource = cv2.cvtColor(np.uint8(replacement_faces_ims_source[0]*255), cv2.COLOR_BGR2GRAY)
     grayTarget = cv2.cvtColor(np.uint8(replacement_faces_ims_target[0] * 255), cv2.COLOR_BGR2GRAY)
-    oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
+    #oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
     oldPointsTarget = cv2.goodFeaturesToTrack(grayTarget, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
     print oldPointsTarget.shape
@@ -66,9 +69,11 @@ def face_replacement(source_vid, target_vid):
             tform3.estimate(oldPointsTarget[:,0, :], newPointsTarget[:,0, :])
             matrix = tform3._inv_matrix
 
-            bboxOut = forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2), np.array(bboxPolygonTarget[:, 1], ndmin=2))
+            bboxesOut = [forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2),
+                                                np.array(bboxPolygonTarget[:, 1], ndmin=2))
+                         for bboxPolygonTarget in bboxPolygonsTarget]
             # print out
-            bboxPolygonTarget = np.hstack([bboxOut[0], bboxOut[1]])
+            bboxPolygonsTarget = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
             # print bboxPolygonTarget
             pts = np.round(bboxPolygonTarget.reshape((-1, 1, 2))).astype(np.int32)
 
@@ -87,18 +92,23 @@ def face_replacement(source_vid, target_vid):
             minX, minY = np.min(bboxPolygonTarget[:,:], axis=0)
             maxX, maxY = np.max(bboxPolygonTarget[:, :], axis=0)
 
-            M = cv2.getPerspectiveTransform(old.astype(np.float32), bboxPolygonTarget.astype(np.float32))
+            Ms = [cv2.getPerspectiveTransform(old.astype(np.float32), bboxPolygonTarget.astype(np.float32))
+                 for old in old_bboxes]
 
-            sourceWarp = cv2.warpPerspective(source, M, source.shape[1::-1])
+            sourceWarps = [cv2.warpPerspective(source, M, source.shape[1::-1]) for M in Ms]
 
             '''SHOW THE FEATURE POINTS'''
-            plt.imshow(sourceWarp)
-            plt.show()
+            for sourceWarp in sourceWarps:
+                plt.imshow(sourceWarp)
+                plt.show()
 
-            mask = np.ones(newSource.shape)
-            mask[bboxPolygonSource[0,1]: bboxPolygonSource[2,1], bboxPolygonSource[0,0]: bboxPolygonSource[2,0]] = 0
-
-            modified_img = MPB(sourceWarp, target, bboxPolygonSource, target, x, y)
+            modified_img = target.copy()
+            for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_target):
+                #mask = np.ones(newSource.shape)
+                #mask[bboxPolygonSource[0, 1]: bboxPolygonSource[2, 1],
+                #bboxPolygonSource[0, 0]: bboxPolygonSource[2, 0]] = 0
+                mask = find_foreground_whole_im(face)
+                modified_img = MPB(sourceWarp, modified_img, mask, modified_img, xR, yR)
 
             '''SHOW THE FEATURE POINTS'''
             plt.imshow(modified_img)
@@ -114,15 +124,27 @@ def face_replacement(source_vid, target_vid):
     #     points = cv2.calcOpticalFlowPyrLK()
 
 
-
+def find_foreground_whole_im(im):
+    rect = (0,0,im.shape[1], im.shape[0])
+    return find_foreground(im, rect)
 
 def find_foreground(im, rect):
+    if im.dtype == np.float64:
+        im_ = (im * 255).astype(np.uint8)
+    elif im.dtype == np.uint8:
+        im_ = im
+    else:
+        raise TypeError("im must have type np.uint8 or np.float64")
     (x, y, w, h) = rect
-    mask = np.zeros(im.shape[:2])
+    mask = np.zeros(im_.shape[:2], dtype=np.uint8)
     bgdModel = np.zeros((1, 65), np.float64)
     fgdModel = np.zeros((1, 65), np.float64)
-    cv2.grabCut(im, mask, (x, y, x + w, y + h),
-                bgdModel, fgdModel, 1, mode=cv2.GC_INIT_WITH_RECT)
+    if x == 0 and y == 0 and w == im_.shape[1] and h == im_.shape[0]:
+        cv2.grabCut(im_, mask, None,
+                    bgdModel, fgdModel, 1)
+    else:
+        cv2.grabCut(im_, mask, (x, y, x + w, y + h),
+                    bgdModel, fgdModel, 1, mode=cv2.GC_INIT_WITH_RECT)
 
     mask[(mask != cv2.GC_PR_FGD) & (mask != cv2.GC_FGD)] = 0
     mask = mask.astype(bool)

@@ -18,7 +18,7 @@ def modified_poisson_blending(source_face, target, mask, originalTarget, x_corne
     for i in range(3):
         F[:,:,i] = poisson_gray(target[:,:,i], F[:,:,i], mask)
 
-    modified_img =  target.copy()
+    modified_img = target.copy()
     modified_img[x_corner:x_corner + source_face.shape[0],
                 y_corner:y_corner + source_face.shape[1],:] = (F * 255).astype(np.uint8)
 

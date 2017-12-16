@@ -50,6 +50,7 @@ def face_replacement(source_vid, target_vid):
             goodOld = oldPoints[st == 1]
 
             newPoints = goodNew.reshape(-1,1,2)
+            oldPoints = goodOld.reshape(-1,1,2)
             tform3 = tf.ProjectiveTransform()
             tform3.estimate(oldPoints[:,0, :], newPoints[:,0, :])
             matrix = tform3._inv_matrix

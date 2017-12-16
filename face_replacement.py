@@ -26,7 +26,8 @@ def face_replacement(source_vid, target_vid):
     replacement_faces_ims = [resize(face, (hR, wR)) for face, (xR,yR, wR,hR)
                          in zip(replacement_faces_ims, target_faces)]
 
-    bboxPolygon = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
+    bboxPolygon = np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]])
+    old = bboxPolygon
 
     gray = cv2.cvtColor(np.uint8(replacement_faces_ims[0]*255), cv2.COLOR_BGR2GRAY)
     oldPoints = cv2.goodFeaturesToTrack(gray, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
@@ -39,10 +40,10 @@ def face_replacement(source_vid, target_vid):
     lk_params = dict(winSize=(15, 15),
                      maxLevel=2,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-    for i, frame in enumerate(source_vid):
-        poly_mask = np.zeros(frame.shape[:2])
-        cv2.fillConvexPoly(poly_mask, bboxPolygon, 4, 1)
-        newFrame = resize(cv2.cvtColor(frame[bboxPolygon[0,1]: bboxPolygon[2,1], bboxPolygon[0,0]: bboxPolygon[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
+    for i, (source, target) in enumerate(zip(source_vid, target_vid)):
+        # poly_mask = np.zeros(target.shape[:2])
+        # cv2.fillConvexPoly(poly_mask, np.round(bboxPolygon), 4, 1)
+        newFrame = resize(cv2.cvtColor(target[bboxPolygon[0,1]: bboxPolygon[2,1], bboxPolygon[0,0]: bboxPolygon[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
 
         if i!=0:
             uint_oldFrame = (oldFrame * 255).astype(np.uint8)
@@ -62,12 +63,26 @@ def face_replacement(source_vid, target_vid):
             bboxPolygon = np.hstack([bboxOut[0], bboxOut[1]])
             # print bboxPolygon
             pts = np.round(bboxPolygon.reshape((-1, 1, 2))).astype(np.int32)
-            videoFrame = cv2.polylines(frame, [pts], True, (0, 255, 255))
+
+            '''SHOW THE BOUNDING BOX'''
+            videoFrame = cv2.polylines(target, [pts], True, (0, 255, 255))
             plt.imshow(videoFrame)
             plt.show()
-            # plt.imshow(newFrame)
-            # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
-            # plt.show()
+
+            '''SHOW THE FEATURE POINTS'''
+            plt.imshow(newFrame)
+            plt.scatter(newPoints[:, 0, 0], newPoints[:, 0, 1])
+            plt.show()
+
+            oldPoints = newPoints
+
+            minX, minY = np.min(bboxPolygon[:,:], axis=0)
+            maxX, maxY = np.max(bboxPolygon[:, :], axis=0)
+
+            M = cv2.getPerspectiveTransform(old.astype(np.float32), bboxPolygon.astype(np.float32))
+
+            frame2 = cv2.warpPerspective(target, M, (source.shape))
+
         oldFrame = newFrame
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):

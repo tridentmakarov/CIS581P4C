@@ -5,6 +5,7 @@ import scipy.sparse as sparse
 from skimage import transform as tf
 import matplotlib.pyplot as plt
 from skimage.transform import resize
+from modified_poisson_blending import modified_poisson_blending as MPB
 
 def detect_faces(img):
     face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
@@ -22,17 +23,20 @@ def face_replacement(source_vid, target_vid):
 
     replacement_image = np.zeros(target.shape, dtype=np.uint8)
 
-    replacement_faces_ims = [source[y:y+h, x:x+w] for (x, y, w, h) in source_faces]
-    replacement_faces_ims = [resize(face, (hR, wR)) for face, (xR,yR, wR,hR)
-                         in zip(replacement_faces_ims, target_faces)]
+    replacement_faces_ims_source = [source[y:y+h, x:x+w] for (x, y, w, h) in source_faces]
+    replacement_faces_ims_target = [resize(face, (hR, wR)) for face, (xR,yR, wR,hR)
+                         in zip(replacement_faces_ims_source, target_faces)]
 
-    bboxPolygon = np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]])
-    old = bboxPolygon
+    bboxPolygonSource = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
+    bboxPolygonTarget = np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]])
+    old = bboxPolygonTarget
 
-    gray = cv2.cvtColor(np.uint8(replacement_faces_ims[0]*255), cv2.COLOR_BGR2GRAY)
-    oldPoints = cv2.goodFeaturesToTrack(gray, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
+    graySource = cv2.cvtColor(np.uint8(replacement_faces_ims_source[0]*255), cv2.COLOR_BGR2GRAY)
+    grayTarget = cv2.cvtColor(np.uint8(replacement_faces_ims_target[0] * 255), cv2.COLOR_BGR2GRAY)
+    oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
+    oldPointsTarget = cv2.goodFeaturesToTrack(grayTarget, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
-    print oldPoints.shape
+    print oldPointsTarget.shape
     # plt.imshow(np.uint8(replacement_faces_ims[0] * 255))
     # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
     #
@@ -40,50 +44,65 @@ def face_replacement(source_vid, target_vid):
     lk_params = dict(winSize=(15, 15),
                      maxLevel=2,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
-        # poly_mask = np.zeros(target.shape[:2])
-        # cv2.fillConvexPoly(poly_mask, np.round(bboxPolygon), 4, 1)
-        newFrame = resize(cv2.cvtColor(target[bboxPolygon[0,1]: bboxPolygon[2,1], bboxPolygon[0,0]: bboxPolygon[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
+
+        newSource = resize(cv2.cvtColor(target[bboxPolygonSource[0,1]: bboxPolygonSource[2,1], bboxPolygonSource[0,0]: bboxPolygonSource[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
+        bboxPolygonSource = [bboxPolygonSource[0]*newSource.shape[0]/source.shape[0], bboxPolygonSource[1]*newSource.shape[1]/source.shape[1]]
+        newTarget = target
 
         if i!=0:
-            uint_oldFrame = (oldFrame * 255).astype(np.uint8)
-            uint_newFrame = (newFrame * 255).astype(np.uint8)
-            newPoints,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldFrame, uint_newFrame, oldPoints, None)
-            goodNew = newPoints[st == 1]
-            goodOld = oldPoints[st == 1]
+            uint_oldTarget = (oldTarget * 255).astype(np.uint8)
+            uint_newTarget = (newTarget * 255).astype(np.uint8)
+            newPointsTarget,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldTarget, uint_newTarget, oldPointsTarget, None)
+            goodNew = newPointsTarget[st == 1]
+            goodOld = oldPointsTarget[st == 1]
 
-            newPoints = goodNew.reshape(-1,1,2)
-            oldPoints = goodOld.reshape(-1, 1, 2)
+            newPointsTarget = goodNew.reshape(-1, 1, 2)
+            oldPointsTarget = goodOld.reshape(-1, 1, 2)
             tform3 = tf.ProjectiveTransform()
-            tform3.estimate(oldPoints[:,0, :], newPoints[:,0, :])
+            tform3.estimate(oldPointsTarget[:,0, :], newPointsTarget[:,0, :])
             matrix = tform3._inv_matrix
 
-            bboxOut = forwardAffineTransform(matrix, np.array(bboxPolygon[:, 0], ndmin=2), np.array(bboxPolygon[:, 1], ndmin=2))
+            bboxOut = forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2), np.array(bboxPolygonTarget[:, 1], ndmin=2))
             # print out
-            bboxPolygon = np.hstack([bboxOut[0], bboxOut[1]])
-            # print bboxPolygon
-            pts = np.round(bboxPolygon.reshape((-1, 1, 2))).astype(np.int32)
+            bboxPolygonTarget = np.hstack([bboxOut[0], bboxOut[1]])
+            # print bboxPolygonTarget
+            pts = np.round(bboxPolygonTarget.reshape((-1, 1, 2))).astype(np.int32)
 
             '''SHOW THE BOUNDING BOX'''
-            videoFrame = cv2.polylines(target, [pts], True, (0, 255, 255))
-            plt.imshow(videoFrame)
+            videoTarget = cv2.polylines(target, [pts], True, (0, 255, 255))
+            plt.imshow(videoTarget)
             plt.show()
 
             '''SHOW THE FEATURE POINTS'''
-            plt.imshow(newFrame)
-            plt.scatter(newPoints[:, 0, 0], newPoints[:, 0, 1])
+            plt.imshow(newTarget)
+            plt.scatter(newPointsTarget[:, 0, 0], newPointsTarget[:, 0, 1])
             plt.show()
 
-            oldPoints = newPoints
+            oldPointsTarget = newPointsTarget
 
-            minX, minY = np.min(bboxPolygon[:,:], axis=0)
-            maxX, maxY = np.max(bboxPolygon[:, :], axis=0)
+            minX, minY = np.min(bboxPolygonTarget[:,:], axis=0)
+            maxX, maxY = np.max(bboxPolygonTarget[:, :], axis=0)
 
-            M = cv2.getPerspectiveTransform(old.astype(np.float32), bboxPolygon.astype(np.float32))
+            M = cv2.getPerspectiveTransform(old.astype(np.float32), bboxPolygonTarget.astype(np.float32))
 
-            frame2 = cv2.warpPerspective(target, M, (source.shape))
+            sourceWarp = cv2.warpPerspective(newSource, M, newSource.shape[1::-1])
 
-        oldFrame = newFrame
+            '''SHOW THE FEATURE POINTS'''
+            plt.imshow(sourceWarp)
+            plt.show()
+
+            mask = np.ones(newSource.shape)
+            mask[bboxPolygonSource[0,1]: bboxPolygonSource[2,1], bboxPolygonSource[0,0]: bboxPolygonSource[2,0]] = 0
+
+            modified_img = MPB(sourceWarp, target, bboxPolygonSource, target, x, y)
+
+            '''SHOW THE FEATURE POINTS'''
+            plt.imshow(modified_img)
+            plt.show()
+
+        oldTarget = newTarget
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
     #     face_im = (face * 255).astype(np.uint8)

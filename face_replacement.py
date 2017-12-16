@@ -48,7 +48,6 @@ def face_replacement(source_vid, target_vid):
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
 
         newSource = resize(cv2.cvtColor(target[bboxPolygonSource[0,1]: bboxPolygonSource[2,1], bboxPolygonSource[0,0]: bboxPolygonSource[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
-        bboxPolygonSource = [bboxPolygonSource[0]*newSource.shape[0]/source.shape[0], bboxPolygonSource[1]*newSource.shape[1]/source.shape[1]]
         newTarget = target
 
         if i!=0:
@@ -87,7 +86,7 @@ def face_replacement(source_vid, target_vid):
 
             M = cv2.getPerspectiveTransform(old.astype(np.float32), bboxPolygonTarget.astype(np.float32))
 
-            sourceWarp = cv2.warpPerspective(newSource, M, newSource.shape[1::-1])
+            sourceWarp = cv2.warpPerspective(source, M, source.shape[1::-1])
 
             '''SHOW THE FEATURE POINTS'''
             plt.imshow(sourceWarp)

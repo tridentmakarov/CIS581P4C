@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import scipy.misc as sc
 import scipy.sparse as sparse
-
+from skimage import transform as tf
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 
@@ -26,6 +26,8 @@ def face_replacement(source_vid, target_vid):
     replacement_faces_ims = [resize(face, (hR, wR)) for face, (xR,yR, wR,hR)
                          in zip(replacement_faces_ims, target_faces)]
 
+    bboxPolygon = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
+
     gray = cv2.cvtColor(np.uint8(replacement_faces_ims[0]*255), cv2.COLOR_BGR2GRAY)
     oldPoints = cv2.goodFeaturesToTrack(gray, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
@@ -39,20 +41,27 @@ def face_replacement(source_vid, target_vid):
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
     for i, frame in enumerate(source_vid):
 
-        newFrame = resize(cv2.cvtColor(frame[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY), (hR, wR))
+        newFrame = resize(cv2.cvtColor(frame[bboxPolygon[0,1]: bboxPolygon[2,1], bboxPolygon[0,0]: bboxPolygon[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
         if i!=0:
             uint_oldFrame = (oldFrame * 255).astype(np.uint8)
             uint_newFrame = (newFrame * 255).astype(np.uint8)
             newPoints,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldFrame, uint_newFrame, oldPoints, None)
-            #newPoints,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldFrame, uint_newFrame, oldPoints, None, **lk_params)
             goodNew = newPoints[st == 1]
             goodOld = oldPoints[st == 1]
 
-            oldPoints = goodNew.reshape(-1,1,2)
-
-            plt.imshow(newFrame)
-            plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
+            newPoints = goodNew.reshape(-1,1,2)
+            tform3 = tf.ProjectiveTransform()
+            tform3.estimate(oldPoints[:,0, :], newPoints[:,0, :])
+            matrix = tform3._inv_matrix
+            out = np.dot(matrix, np.transpose(np.hstack([bboxPolygon, np.ones([int(bboxPolygon.shape[0]),1])])))
+            bboxPolygon = np.round(np.transpose(np.vstack([out[0, :] / out[2, :], out[1, :] / out[2, :]]))).astype(np.int)
+            pts = bboxPolygon.reshape((-1, 1, 2))
+            videoFrame = cv2.polylines(frame, [pts], True, (0, 255, 255))
+            plt.imshow(videoFrame)
             plt.show()
+            # plt.imshow(newFrame)
+            # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
+            # plt.show()
         oldFrame = newFrame
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):

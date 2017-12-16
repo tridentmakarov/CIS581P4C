@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 from skimage.transform import resize
 
 def modified_poisson_blending(source_face, target, mask, originalTarget, x_corner, y_corner):
+    source_face = source_face.astype(float)
+    target = target.astype(float)
+    mask = mask.astype(float)
     source_face /= 255.0
     target /= 255.0
     mask /= 255.0
@@ -28,13 +31,13 @@ def modified_poisson_blending(source_face, target, mask, originalTarget, x_corne
 # Poisson blending using http://vacation.aid.design.kyushu-u.ac.jp/and/poisson/
 def poisson_gray(source, target, mask):
     n = source.size
-    f = np.zeros(n, 1)
+    #f = np.zeros((n, 1))
     fx = mask > 0
     bx = mask == 0
-    q = np.zeros(n, 1)
+    q = np.zeros((n, 1))
     q[fx] = 1
-
-    I = np.diag(sparse.csc_matrix(q))
+    q = q.flatten()
+    I = scipy.sparse.diags(q)
     A = -4 * I
     A += np.roll(I, (0, source.shape[0]), (0,1)) + np.roll(I, (0, - source.shape[0]), (0,1)) +\
          np.roll(I, (0, 1), (0,1)) + np.roll(I, (0, -1), (0,1))

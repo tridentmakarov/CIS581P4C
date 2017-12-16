@@ -40,8 +40,10 @@ def face_replacement(source_vid, target_vid):
                      maxLevel=2,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
     for i, frame in enumerate(source_vid):
-
+        poly_mask = np.zeros(frame.shape[:2])
+        cv2.fillConvexPoly(poly_mask, bboxPolygon, 4, 1)
         newFrame = resize(cv2.cvtColor(frame[bboxPolygon[0,1]: bboxPolygon[2,1], bboxPolygon[0,0]: bboxPolygon[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
+
         if i!=0:
             uint_oldFrame = (oldFrame * 255).astype(np.uint8)
             uint_newFrame = (newFrame * 255).astype(np.uint8)
@@ -50,12 +52,14 @@ def face_replacement(source_vid, target_vid):
             goodOld = oldPoints[st == 1]
 
             newPoints = goodNew.reshape(-1,1,2)
-            oldPoints = goodOld.reshape(-1,1,2)
+            oldPoints = goodOld.reshape(-1, 1, 2)
             tform3 = tf.ProjectiveTransform()
             tform3.estimate(oldPoints[:,0, :], newPoints[:,0, :])
             matrix = tform3._inv_matrix
             out = np.dot(matrix, np.transpose(np.hstack([bboxPolygon, np.ones([int(bboxPolygon.shape[0]),1])])))
+            print out
             bboxPolygon = np.round(np.transpose(np.vstack([out[0, :] / out[2, :], out[1, :] / out[2, :]]))).astype(np.int)
+            print bboxPolygon
             pts = bboxPolygon.reshape((-1, 1, 2))
             videoFrame = cv2.polylines(frame, [pts], True, (0, 255, 255))
             plt.imshow(videoFrame)

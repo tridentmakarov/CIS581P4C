@@ -34,12 +34,17 @@ def face_replacement(source_vid, target_vid):
     # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
     #
     # plt.show()
-
+    lk_params = dict(winSize=(15, 15),
+                     maxLevel=2,
+                     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
     for i, frame in enumerate(source_vid):
 
         newFrame = resize(cv2.cvtColor(frame[y: y + h, x: x + w], cv2.COLOR_BGR2GRAY), (hR, wR))
         if i!=0:
-            newPoints,  st, err = cv2.calcOpticalFlowPyrLK(oldFrame, newFrame, oldPoints, None)
+            uint_oldFrame = (oldFrame * 255).astype(np.uint8)
+            uint_newFrame = (newFrame * 255).astype(np.uint8)
+            newPoints,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldFrame, uint_newFrame, oldPoints, None)
+            #newPoints,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldFrame, uint_newFrame, oldPoints, None, **lk_params)
             goodNew = newPoints[st == 1]
             goodOld = oldPoints[st == 1]
 
@@ -48,7 +53,6 @@ def face_replacement(source_vid, target_vid):
             plt.imshow(newFrame)
             plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
             plt.show()
-
         oldFrame = newFrame
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):

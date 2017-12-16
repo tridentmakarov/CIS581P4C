@@ -49,7 +49,8 @@ def face_replacement(source_vid, target_vid):
 
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
 
-        newSource = resize(cv2.cvtColor(target[bboxPolygonSource[0,1]: bboxPolygonSource[2,1], bboxPolygonSource[0,0]: bboxPolygonSource[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
+        newSources = [resize(cv2.cvtColor(target[bboxPolygonSource[0,1]: bboxPolygonSource[2,1], bboxPolygonSource[0,0]: bboxPolygonSource[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
+                      for (xR,yR, wR,hR) in target_faces]
         newTarget = target
 
         if i!=0:

@@ -133,20 +133,20 @@ def face_replacement(source_vid, target_vid, out_filename):
             '''SHOW THE FEATURE POINTS'''
             fig = plt.figure()
             plt.imshow(modified_img)
-            # plt.show()
-
+            plt.show()
+            #
 
             # # Creating video frame (this code was adapted from imageio.readthedocs.io)
-            canvas = plt.get_current_fig_manager().canvas
-            agg = canvas.switch_backends(FigureCanvasAgg)
-            agg.draw()
-            s = agg.tostring_rgb()
-            l, b, w, h = agg.figure.bbox.bounds
-            w, h = int(w), int(h)
-            buf = np.fromstring(s, dtype=np.uint8)
-            buf.shape = h, w, 3
-            trackedVideo.append_data(buf)
-            plt.close(fig)
+            # canvas = plt.get_current_fig_manager().canvas
+            # agg = canvas.switch_backends(FigureCanvasAgg)
+            # agg.draw()
+            # s = agg.tostring_rgb()
+            # l, b, w, h = agg.figure.bbox.bounds
+            # w, h = int(w), int(h)
+            # buf = np.fromstring(s, dtype=np.uint8)
+            # buf.shape = h, w, 3
+            # trackedVideo.append_data(buf)
+            # plt.close(fig)
 
         oldTarget = newTarget
         print i

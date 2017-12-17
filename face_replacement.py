@@ -79,13 +79,13 @@ def face_replacement(source_vid, target_vid):
 
             '''SHOW THE BOUNDING BOX'''
             videoTarget = cv2.polylines(target, [pts], True, (0, 255, 255))
-            plt.imshow(videoTarget)
-            plt.show()
+            #plt.imshow(videoTarget)
+            #plt.show()
 
             '''SHOW THE FEATURE POINTS'''
-            plt.imshow(newTarget)
-            plt.scatter(newPointsTarget[:, 0, 0], newPointsTarget[:, 0, 1])
-            plt.show()
+            #plt.imshow(newTarget)
+            #plt.scatter(newPointsTarget[:, 0, 0], newPointsTarget[:, 0, 1])
+            #plt.show()
 
             oldPointsTarget = newPointsTarget
 
@@ -101,18 +101,20 @@ def face_replacement(source_vid, target_vid):
 
             '''SHOW THE FEATURE POINTS'''
             for sourceF in sourceFaces:
-                plt.imshow(sourceF)
-                plt.show()
+                pass
+                #plt.imshow(sourceF)
+                #plt.show()
 
 
 
             modified_img = target.copy()
-            for (xR,yR, wR,hR), face, sFace in zip(target_faces, replacement_faces_ims_target, sourceFaces):
+            for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_target):
                 #mask = np.ones(newSource.shape)
                 #mask[bboxPolygonSource[0, 1]: bboxPolygonSource[2, 1],
                 #bboxPolygonSource[0, 0]: bboxPolygonSource[2, 0]] = 0
                 mask = find_foreground_whole_im(face)
-                modified_img = MPB(sFace, modified_img, mask, modified_img, xR, yR)
+                print mask.shape
+                modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], mask, modified_img, xR, yR)
 
             '''SHOW THE FEATURE POINTS'''
             plt.imshow(modified_img)

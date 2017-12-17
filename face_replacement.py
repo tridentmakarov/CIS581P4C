@@ -1,21 +1,22 @@
 import cv2
-import numpy as np
-import scipy.misc as sc
-import scipy.sparse as sparse
-from skimage import transform as tf
+import imageio
 import matplotlib.pyplot as plt
+import numpy as np
+from skimage import transform as tf
 from skimage.transform import resize
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 from modified_poisson_blending import modified_poisson_blending as MPB
-import math
+
 
 def detect_faces(img):
     face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return face_cascade.detectMultiScale(gray, 1.3, 5)
 
-def face_replacement(source_vid, target_vid):
+def face_replacement(source_vid, target_vid, out_filename):
     source = source_vid.get_data(0)
     target = target_vid.get_data(0)
+    trackedVideo = imageio.get_writer(out_filename, fps=source_vid._meta['fps'])
 
     source_faces = detect_faces(source)
     target_faces = detect_faces(target)
@@ -23,64 +24,70 @@ def face_replacement(source_vid, target_vid):
         raise ValueError("Face could not be detected in source image")
 
     (x,y,w,h) = source_faces[0]
-    #replacement_image = np.zeros(target.shape, dtype=np.uint8)
+    (xR, yR, wR, hR) = target_faces[0]
 
-    #replacement_faces_ims_source = [source[y:y+h, x:x+w] for (x, y, w, h) in source_faces]
     replacement_face = source[y:y+h, x:x+w]
-    replacement_faces_ims_target = [resize(replacement_face, (hR, wR)) for (xR,yR, wR,hR)
-                         in target_faces]
+    replacement_faces_ims_source = [resize(replacement_face, (hR, wR)) for (xR, yR, wR, hR)
+                                    in target_faces]
+
 
     bboxPolygonsSource = [np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]]) for (x, y, w, h) in source_faces]
-    bboxPolygonsTarget = [np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]]) for (xR,yR, wR,hR) in target_faces]
-    bboxPolygonSource = bboxPolygonsSource[0]
-    #bboxPolygonTarget = bboxPolygonsTarget[0]
-    old_bboxes = bboxPolygonsTarget
+    bboxTarget = [np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]]) for (xR, yR, wR, hR) in target_faces]
+    bboxSource = bboxPolygonsSource[0]
+    #bboxPolygonTarget = bboxTarget[0]
+    old_bboxes = bboxTarget
 
 
-    #graySource = cv2.cvtColor(np.uint8(replacement_faces_ims_source[0]*255), cv2.COLOR_BGR2GRAY)
-    grayTarget = cv2.cvtColor(np.uint8(replacement_faces_ims_target[0] * 255), cv2.COLOR_BGR2GRAY)
-    #oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
-    oldPointsTarget = cv2.goodFeaturesToTrack(grayTarget, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
+    # graySource = cv2.cvtColor(np.uint8(replacement_faces_ims_source[0]*255), cv2.COLOR_BGR2GRAY)
+    grayTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
+    # oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
+    targetMask = grayTarget[yR:yR+hR, xR:xR+wR]
+    targetFeaturesOld = cv2.goodFeaturesToTrack(targetMask, 100, 0.01, 10, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
-    # print oldPointsTarget.shape
-    # plt.imshow(np.uint8(replacement_faces_ims_target[0] * 255))
-    # plt.scatter(oldPointsTarget[:, 0, 0], oldPointsTarget[:, 0, 1])
+    # print targetFeaturesOld.shape
+    # plt.imshow(np.uint8(target * 255))
+    # plt.scatter(targetFeaturesOld[:, 0, 0]+xR, targetFeaturesOld[:, 0, 1]+yR)
+    # plt.show()
 
-    plt.show()
-    lk_params = dict(winSize=(15, 15),
-                     maxLevel=2,
+    lk_params = dict(winSize=(100, 100),
+                     maxLevel=15,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+
+    oldTarget = target
 
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
 
-        newSources = [resize(cv2.cvtColor(target[bboxPolygonSource[0,1]: bboxPolygonSource[2,1], bboxPolygonSource[0,0]: bboxPolygonSource[2,0]], cv2.COLOR_BGR2GRAY), (hR, wR))
-                      for (xR,yR, wR,hR) in target_faces]
-        newTarget = target
+        newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
 
-        if i!=0:
-            uint_oldTarget = (oldTarget * 255).astype(np.uint8)
-            uint_newTarget = (newTarget * 255).astype(np.uint8)
-            newPointsTarget,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldTarget, uint_newTarget, oldPointsTarget, None)
-            goodNew = newPointsTarget[st == 1]
-            goodOld = oldPointsTarget[st == 1]
+        if i != 0:
+            uint_oldTarget = oldTarget
+            uint_newTarget = newTarget
+            targetFeaturesNew,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldTarget, uint_newTarget, targetFeaturesOld, None, **lk_params)
 
-            newPointsTarget = goodNew.reshape(-1, 1, 2)
-            oldPointsTarget = goodOld.reshape(-1, 1, 2)
+            # plt.imshow(newTarget)
+            # plt.scatter(targetFeaturesNew[:,0, 0] + xR, targetFeaturesNew[:,0, 1] + yR)
+            # plt.show()
 
-            useable = np.where(np.sqrt((newPointsTarget[:, 0, 0] - oldPointsTarget[:, 0, 0]) ** 2 + (newPointsTarget[:, 0, 1] - oldPointsTarget[:, 0, 1]) ** 2) < 6)
+            goodNew = targetFeaturesNew[st == 1]
+            goodOld = targetFeaturesOld[st == 1]
+
+            newPointsT = goodNew.reshape(-1, 1, 2)
+            oldPointsT = goodOld.reshape(-1, 1, 2)
+
+            useable = np.where(np.sqrt((newPointsT[:, 0, 0] - oldPointsT[:, 0, 0]) ** 2 + (newPointsT[:, 0, 1] - oldPointsT[:, 0, 1]) ** 2) < 4)
 
             newWarpTarget = np.reshape(goodNew[useable[0], :], (-1, 2))
             oldWarpTarget = np.reshape(goodOld[useable[0], :], (-1, 2))
 
             tform3 = tf.ProjectiveTransform()
-            tform3.estimate(oldWarpTarget[:, :], newWarpTarget[:, :])
+            tform3.estimate(newPointsT[:, 0, :], oldPointsT[:, 0, :])
             matrix = tform3._inv_matrix
 
             bboxesOut = [forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2),
                                                 np.array(bboxPolygonTarget[:, 1], ndmin=2))
-                         for bboxPolygonTarget in bboxPolygonsTarget]
+                         for bboxPolygonTarget in bboxTarget]
             # print out
-            bboxPolygonsTarget = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
+            bboxTarget = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
             # print bboxPolygonTarget
             pts = np.round(bboxPolygonTarget.reshape((-1, 1, 2))).astype(np.int32)
 
@@ -90,11 +97,11 @@ def face_replacement(source_vid, target_vid):
             #plt.show()
 
             '''SHOW THE FEATURE POINTS'''
-            plt.imshow(newTarget)
-            plt.scatter(newPointsTarget[:, 0, 0] + xR, newPointsTarget[:, 0, 1] + yR)
-            plt.show()
+            # plt.imshow(newTarget)
+            # plt.scatter(newPointsT[:, 0, 0] + xR, newPointsT[:, 0, 1] + yR)
+            # plt.show()
 
-            oldPointsTarget = newPointsTarget
+            targetFeaturesOld = targetFeaturesNew
 
             minX, minY = np.min(bboxPolygonTarget[:,:], axis=0)
             maxX, maxY = np.max(bboxPolygonTarget[:, :], axis=0)
@@ -119,15 +126,29 @@ def face_replacement(source_vid, target_vid):
             if np.all(mask == 0):
                 print "bad mask"
                 mask[:] = 1
-            for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_target):
+            for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_source):
                 #im_mask = np.ones(face.shape[:2], dtype=np.bool)
                 im_mask = resize(mask[y:y+h, x:x+w], face.shape[:2])
 
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
 
             '''SHOW THE FEATURE POINTS'''
+            plt.figure()
             plt.imshow(modified_img)
-            plt.show()
+            # plt.show()
+
+
+            # # Creating video frame (this code was adapted from imageio.readthedocs.io)
+            canvas = plt.get_current_fig_manager().canvas
+            agg = canvas.switch_backends(FigureCanvasAgg)
+            agg.draw()
+            s = agg.tostring_rgb()
+            l, b, w, h = agg.figure.bbox.bounds
+            w, h = int(w), int(h)
+            buf = np.fromstring(s, dtype=np.uint8)
+            buf.shape = h, w, 3
+            trackedVideo.append_data(buf)
+            # plt.close(fig)
 
         oldTarget = newTarget
         print i
@@ -179,5 +200,5 @@ def forwardAffineTransform(T,v1,v2):
 
     retMat = np.dot(U,T[:,0:2])
 
-    return (retMat[:,0].reshape((vecSize,1)), retMat[:,1].reshape((vecSize,1)))
+    return retMat[:, 0].reshape((vecSize, 1)), retMat[:, 1].reshape((vecSize, 1))
 

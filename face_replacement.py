@@ -96,19 +96,23 @@ def face_replacement(source_vid, target_vid):
                  for old in old_bboxes]
 
             sourceWarps = [cv2.warpPerspective(source, M, source.shape[1::-1]) for M in Ms]
+            sourceFaces = np.array([sourceWarp[y:y+h, x:x+w, :] for sourceWarp in sourceWarps])
+
 
             '''SHOW THE FEATURE POINTS'''
-            for sourceWarp in sourceWarps:
-                plt.imshow(sourceWarp)
+            for sourceF in sourceFaces:
+                plt.imshow(sourceF)
                 plt.show()
 
+
+
             modified_img = target.copy()
-            for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_target):
+            for (xR,yR, wR,hR), face, sFace in zip(target_faces, replacement_faces_ims_target, sourceFaces):
                 #mask = np.ones(newSource.shape)
                 #mask[bboxPolygonSource[0, 1]: bboxPolygonSource[2, 1],
                 #bboxPolygonSource[0, 0]: bboxPolygonSource[2, 0]] = 0
                 mask = find_foreground_whole_im(face)
-                modified_img = MPB(sourceWarp, modified_img, mask, modified_img, xR, yR)
+                modified_img = MPB(sFace, modified_img, mask, modified_img, xR, yR)
 
             '''SHOW THE FEATURE POINTS'''
             plt.imshow(modified_img)

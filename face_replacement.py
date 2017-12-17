@@ -115,14 +115,14 @@ def face_replacement(source_vid, target_vid):
 
 
             modified_img = target.copy()
-            #mask = find_foreground(source, source_faces[0])
-            # if np.all(mask == 0):
-            #     mask[:] = 1
+            mask = find_foreground(source, (x,y,w,h))
+            if np.all(mask == 0):
+                print "bad mask"
+                mask[:] = 1
             for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_target):
-                im_mask = np.ones(face.shape[:2], dtype=np.bool)
-                #im_mask = resize(mask, face.shape[:2])
-                #mask[bboxPolygonSource[0, 1]: bboxPolygonSource[2, 1],
-                #bboxPolygonSource[0, 0]: bboxPolygonSource[2, 0]] = 0
+                #im_mask = np.ones(face.shape[:2], dtype=np.bool)
+                im_mask = resize(mask[y:y+h, x:x+w], face.shape[:2])
+
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
 
             '''SHOW THE FEATURE POINTS'''
@@ -139,10 +139,6 @@ def face_replacement(source_vid, target_vid):
     #
     #     points = cv2.calcOpticalFlowPyrLK()
 
-
-def find_foreground_whole_im(im):
-    rect = (0,0,im.shape[1], im.shape[0])
-    return find_foreground(im, rect)
 
 def find_foreground(im, rect):
     if im.dtype == np.float64:
@@ -161,8 +157,8 @@ def find_foreground(im, rect):
         cv2.grabCut(im_, mask, None,
                     bgdModel, fgdModel, 2, mode=cv2.GC_INIT_WITH_MASK)
     else:
-        cv2.grabCut(im_, mask, (x, y, x + w, y + h),
-                    bgdModel, fgdModel, 1, mode=cv2.GC_INIT_WITH_RECT)
+        cv2.grabCut(im_, mask, (x, y, w, h),
+                    bgdModel, fgdModel, 5, mode=cv2.GC_INIT_WITH_RECT)
 
     mask[(mask != cv2.GC_PR_FGD) & (mask != cv2.GC_FGD)] = 0
     mask = mask.astype(bool)

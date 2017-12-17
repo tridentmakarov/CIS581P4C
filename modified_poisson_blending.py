@@ -18,15 +18,22 @@ def modified_poisson_blending(source_face, target, mask, originalTarget, x_corne
     print source_face.dtype
     if not source_face.dtype == np.uint8:
         print "Changing dtype"
+        source_face = source_face.copy()
         source_face *= 255
         source_face = source_face.astype(np.uint8)
 
     if not target.dtype == np.uint8:
+        target = target.copy()
         target *= 255
         target = target.astype(np.uint8)
 
-    center = (x_corner + target.shape[0]//2, y_corner + target.shape[1]//2)
-    modified_img = cv2.seamlessClone(source_face, originalTarget, mask, center,cv2.MIXED_CLONE)
+    #center = (x_corner + target.shape[0]//2, y_corner + target.shape[1]//2)
+    center = (target.shape[0]//2, target.shape[1]//2)
+    #modified_img = cv2.seamlessClone(source_face, originalTarget, mask, center,cv2.MIXED_CLONE)
+    out = cv2.seamlessClone(source_face, target, mask, center,cv2.MIXED_CLONE)
+    out = cv2.seamlessClone(target, out, ~mask, center,cv2.MIXED_CLONE)
+    modified_img = originalTarget.copy()
+    modified_img[y_corner:y_corner + target.shape[1], x_corner:x_corner + target.shape[0]] = out
     #blended_target = originalTarget[x_corner:target.shape[0], y_corner:target.shape[1], :]
     #blended_target = originalTarget[x_corner:x_corner+target.shape[0], y_corner:y_corner+target.shape[1], :]
     #blended_target = originalTarget[y_corner:y_corner+target.shape[1], x_corner:x_corner+target.shape[0], :]

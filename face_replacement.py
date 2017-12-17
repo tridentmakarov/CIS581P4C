@@ -108,13 +108,15 @@ def face_replacement(source_vid, target_vid):
 
 
             modified_img = target.copy()
+            #mask = find_foreground(source, source_faces[0])
+            # if np.all(mask == 0):
+            #     mask[:] = 1
             for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_target):
-                #mask = np.ones(newSource.shape)
+                im_mask = np.ones(face.shape[:2], dtype=np.bool)
+                #im_mask = resize(mask, face.shape[:2])
                 #mask[bboxPolygonSource[0, 1]: bboxPolygonSource[2, 1],
                 #bboxPolygonSource[0, 0]: bboxPolygonSource[2, 0]] = 0
-                mask = find_foreground_whole_im(face)
-                print mask.shape
-                modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], mask, modified_img, xR, yR)
+                modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
 
             '''SHOW THE FEATURE POINTS'''
             plt.imshow(modified_img)
@@ -146,8 +148,10 @@ def find_foreground(im, rect):
     bgdModel = np.zeros((1, 65), np.float64)
     fgdModel = np.zeros((1, 65), np.float64)
     if x == 0 and y == 0 and w == im_.shape[1] and h == im_.shape[0]:
+        mask[:] = cv2.GC_PR_FGD
+        mask[mask.shape[0], mask.shape[1]] = cv2.GC_PR_BGD
         cv2.grabCut(im_, mask, None,
-                    bgdModel, fgdModel, 1)
+                    bgdModel, fgdModel, 2, mode=cv2.GC_INIT_WITH_MASK)
     else:
         cv2.grabCut(im_, mask, (x, y, x + w, y + h),
                     bgdModel, fgdModel, 1, mode=cv2.GC_INIT_WITH_RECT)

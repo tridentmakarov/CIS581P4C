@@ -7,22 +7,17 @@ from skimage.transform import resize
 from roll_sparse import roll_sparse
 
 def modified_poisson_blending(source_face, target, mask, originalTarget, x_corner, y_corner):
-    source_face = source_face.astype(float)
+    # source_face = source_face.astype(float)
     target = target.astype(float)
-    mask = mask.astype(float)
-    source_face /= 255.0
+    # mask = mask.astype(float)
+    # source_face /= 255.0
     target /= 255.0
-    mask /= 255.0
-
-    modified_img = originalTarget.copy()
-    out = np.zeros(target.shape)
-    center = (y_corner + target.shape[1], x_corner + target.shape[0])
-
-    #cv2.seamlessClone(source_face, target, mask, (target.shape[1]//2,  target.shape[0]//2) ,out)
-    #cv2.seamlessClone(source_face, target, mask, (47,47), out)
-    out = cv2.seamlessClone(source_face, originalTarget, (mask.astype(np.uint8)*255), center, cv2.NORMAL_CLONE)
-    modified_img[y_corner:y_corner + source_face.shape[1],
-    x_corner:x_corner + source_face.shape[0], :] = out
+    mask = mask.astype(np.uint8) * 255
+    source_face = (source_face * 255).astype(np.uint8)
+    source_face = (source_face * 255).astype(np.uint8)
+    #modified_img = originalTarget.copy()
+    center = (x_corner + target.shape[0]//2, y_corner + target.shape[1]//2)
+    modified_img = cv2.seamlessClone(source_face, originalTarget, mask, center,cv2.NORMAL_CLONE)
     return modified_img
 
     F = np.zeros(source_face.shape)
@@ -45,8 +40,8 @@ def modified_poisson_blending(source_face, target, mask, originalTarget, x_corne
 def poisson_gray(source, target, mask):
     n = source.size
     #f = np.zeros((n, 1))
-    bx = mask > 0
-    fx = mask == 0
+    fx = mask != 0
+    bx = mask == 0
     q = np.zeros(n)
     q[fx.flatten()] = 1
     I = scipy.sparse.diags(q)

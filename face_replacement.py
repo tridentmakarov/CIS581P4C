@@ -87,9 +87,10 @@ def face_replacement(source_vid, target_vid, out_filename):
                                                 np.array(bboxPolygonTarget[:, 1], ndmin=2))
                          for bboxPolygonTarget in bboxTarget]
             # print out
-            bboxTarget = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
+            bboxT = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
+            bboxTarget = np.array(bboxT)
             # print bboxPolygonTarget
-            pts = np.round(bboxPolygonTarget.reshape((-1, 1, 2))).astype(np.int32)
+            pts = np.round(bboxTarget.reshape((-1, 1, 2))).astype(np.int32)
 
             '''SHOW THE BOUNDING BOX'''
             videoTarget = cv2.polylines(target, [pts], True, (0, 255, 255))
@@ -103,10 +104,7 @@ def face_replacement(source_vid, target_vid, out_filename):
 
             targetFeaturesOld = targetFeaturesNew
 
-            minX, minY = np.min(bboxPolygonTarget[:,:], axis=0)
-            maxX, maxY = np.max(bboxPolygonTarget[:, :], axis=0)
-
-            Ms = [cv2.getPerspectiveTransform(old.astype(np.float32), bboxPolygonTarget.astype(np.float32))
+            Ms = [cv2.getPerspectiveTransform(old.astype(np.float32), bboxTarget.astype(np.float32))
                  for old in old_bboxes]
 
             sourceWarps = [cv2.warpPerspective(source, M, source.shape[1::-1]) for M in Ms]
@@ -133,7 +131,7 @@ def face_replacement(source_vid, target_vid, out_filename):
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
 
             '''SHOW THE FEATURE POINTS'''
-            plt.figure()
+            fig = plt.figure()
             plt.imshow(modified_img)
             # plt.show()
 
@@ -148,7 +146,7 @@ def face_replacement(source_vid, target_vid, out_filename):
             buf = np.fromstring(s, dtype=np.uint8)
             buf.shape = h, w, 3
             trackedVideo.append_data(buf)
-            # plt.close(fig)
+            plt.close(fig)
 
         oldTarget = newTarget
         print i

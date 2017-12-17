@@ -6,6 +6,7 @@ from skimage import transform as tf
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 from modified_poisson_blending import modified_poisson_blending as MPB
+import math
 
 def detect_faces(img):
     face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
@@ -41,9 +42,9 @@ def face_replacement(source_vid, target_vid):
     #oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
     oldPointsTarget = cv2.goodFeaturesToTrack(grayTarget, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
-    print oldPointsTarget.shape
-    plt.imshow(np.uint8(replacement_faces_ims_target[0] * 255))
-    plt.scatter(oldPointsTarget[:, 0, 0], oldPointsTarget[:, 0, 1])
+    # print oldPointsTarget.shape
+    # plt.imshow(np.uint8(replacement_faces_ims_target[0] * 255))
+    # plt.scatter(oldPointsTarget[:, 0, 0], oldPointsTarget[:, 0, 1])
 
     plt.show()
     lk_params = dict(winSize=(15, 15),
@@ -65,8 +66,14 @@ def face_replacement(source_vid, target_vid):
 
             newPointsTarget = goodNew.reshape(-1, 1, 2)
             oldPointsTarget = goodOld.reshape(-1, 1, 2)
+
+            useable = np.where(np.sqrt((newPointsTarget[:, 0, 0] - oldPointsTarget[:, 0, 0]) ** 2 + (newPointsTarget[:, 0, 1] - oldPointsTarget[:, 0, 1]) ** 2) < 6)
+
+            newWarpTarget = np.reshape(goodNew[useable[0], :], (-1, 2))
+            oldWarpTarget = np.reshape(goodOld[useable[0], :], (-1, 2))
+
             tform3 = tf.ProjectiveTransform()
-            tform3.estimate(oldPointsTarget[:,0, :], newPointsTarget[:,0, :])
+            tform3.estimate(oldWarpTarget[:, :], newWarpTarget[:, :])
             matrix = tform3._inv_matrix
 
             bboxesOut = [forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2),

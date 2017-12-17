@@ -35,9 +35,8 @@ def poisson_gray(source, target, mask):
     #f = np.zeros((n, 1))
     fx = mask > 0
     bx = mask == 0
-    q = np.zeros((n, 1))
-    q[fx] = 1
-    q = q.flatten()
+    q = np.zeros(n)
+    q[fx.flatten()] = 1
     I = scipy.sparse.diags(q)
     A = -4 * I
     print "Sparse roll"

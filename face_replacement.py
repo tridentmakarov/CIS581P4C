@@ -42,10 +42,10 @@ def face_replacement(source_vid, target_vid):
     oldPointsTarget = cv2.goodFeaturesToTrack(grayTarget, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
     print oldPointsTarget.shape
-    # plt.imshow(np.uint8(replacement_faces_ims[0] * 255))
-    # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
-    #
-    # plt.show()
+    plt.imshow(np.uint8(replacement_faces_ims_target[0] * 255))
+    plt.scatter(oldPointsTarget[:, 0, 0], oldPointsTarget[:, 0, 1])
+
+    plt.show()
     lk_params = dict(winSize=(15, 15),
                      maxLevel=2,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
@@ -83,9 +83,9 @@ def face_replacement(source_vid, target_vid):
             #plt.show()
 
             '''SHOW THE FEATURE POINTS'''
-            #plt.imshow(newTarget)
-            #plt.scatter(newPointsTarget[:, 0, 0], newPointsTarget[:, 0, 1])
-            #plt.show()
+            plt.imshow(newTarget)
+            plt.scatter(newPointsTarget[:, 0, 0] + xR, newPointsTarget[:, 0, 1] + yR)
+            plt.show()
 
             oldPointsTarget = newPointsTarget
 
@@ -123,6 +123,7 @@ def face_replacement(source_vid, target_vid):
             plt.show()
 
         oldTarget = newTarget
+        print i
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
     #     face_im = (face * 255).astype(np.uint8)

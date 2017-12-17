@@ -18,15 +18,15 @@ from stabilize import stabilize
 
 video1 = imageio.get_reader("resources/MarquesBrownlee.mp4")
 video2 = imageio.get_reader("resources/TheMartian.mp4")
-
+print "loaded"
 stabilize(video1, "resources/stabilized", 74)
-
+print "stabilized"
 face_replacement.face_replacement(video1, video2)
-
+print "face"
 outVideo = imageio.get_writer("resources/testOutput.mp4", fps=video1._meta['fps'])
-
+print "out"
 
 prev_frame = video1.get_next_data()
-
+print "next"
 cascade = face_rep.detect_faces(prev_frame)
-
+print "done"

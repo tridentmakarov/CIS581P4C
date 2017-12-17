@@ -161,6 +161,7 @@ def find_foreground(im, rect):
 
     return mask
 
+# From https://stackoverflow.com/questions/37363875/matlab-transformpointsforward-equivalent-in-python
 def forwardAffineTransform(T,v1,v2):
     v1 = np.transpose(v1)
     v2 = np.transpose(v2)

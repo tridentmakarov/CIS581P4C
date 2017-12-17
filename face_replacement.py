@@ -46,7 +46,7 @@ def face_replacement(source_vid, target_vid):
     # plt.imshow(np.uint8(replacement_faces_ims_target[0] * 255))
     # plt.scatter(oldPointsTarget[:, 0, 0], oldPointsTarget[:, 0, 1])
 
-    plt.show()
+    #plt.show()
     lk_params = dict(winSize=(15, 15),
                      maxLevel=2,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
@@ -90,9 +90,9 @@ def face_replacement(source_vid, target_vid):
             #plt.show()
 
             '''SHOW THE FEATURE POINTS'''
-            plt.imshow(newTarget)
-            plt.scatter(newPointsTarget[:, 0, 0] + xR, newPointsTarget[:, 0, 1] + yR)
-            plt.show()
+            # plt.imshow(newTarget)
+            # plt.scatter(newPointsTarget[:, 0, 0] + xR, newPointsTarget[:, 0, 1] + yR)
+            # plt.show()
 
             oldPointsTarget = newPointsTarget
 
@@ -125,7 +125,7 @@ def face_replacement(source_vid, target_vid):
 
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
 
-            '''SHOW THE FEATURE POINTS'''
+            '''SHOW THE FACE REPLACED IMAGE'''
             plt.imshow(modified_img)
             plt.show()
 

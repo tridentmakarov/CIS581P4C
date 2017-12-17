@@ -5,15 +5,18 @@ import scipy.sparse as sparse
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 from roll_sparse import roll_sparse
+import face_landmark
 
-def modified_poisson_blending(source_face, target, mask, originalTarget, x_corner, y_corner):
+def modified_poisson_blending(source_face, target_face, mask, originalTarget, x_corner, y_corner):
     # if not source_face.dtype == float:
     #     source_face = source_face.astype(float)
     #     source_face /= 255
-    # if not target.dtype == float:
-    #     target = target.astype(float)
-    #     target /= 255
+    # if not target_face.dtype == float:
+    #     target_face = target_face.astype(float)
+    #     target_face /= 255
     #mask = mask.astype(float)
+
+    aligned_source = face_landmark.align_source_face_to_target(source_face, target_face)
     mask = mask.astype(np.uint8) * 255
     print source_face.dtype
     if not source_face.dtype == np.uint8:
@@ -22,21 +25,21 @@ def modified_poisson_blending(source_face, target, mask, originalTarget, x_corne
         source_face *= 255
         source_face = source_face.astype(np.uint8)
 
-    if not target.dtype == np.uint8:
-        target = target.copy()
-        target *= 255
-        target = target.astype(np.uint8)
+    if not target_face.dtype == np.uint8:
+        target_face = target_face.copy()
+        target_face *= 255
+        target_face = target_face.astype(np.uint8)
 
-    #center = (x_corner + target.shape[0]//2, y_corner + target.shape[1]//2)
-    center = (target.shape[0]//2, target.shape[1]//2)
+    #center = (x_corner + target_face.shape[0]//2, y_corner + target_face.shape[1]//2)
+    center = (target_face.shape[0] // 2, target_face.shape[1] // 2)
     #modified_img = cv2.seamlessClone(source_face, originalTarget, mask, center,cv2.MIXED_CLONE)
-    out = cv2.seamlessClone(source_face, target, mask, center,cv2.MIXED_CLONE)
-    out = cv2.seamlessClone(target, out, ~mask, center,cv2.MIXED_CLONE)
+    out = cv2.seamlessClone(source_face, target_face, mask, center, cv2.MIXED_CLONE)
+    out = cv2.seamlessClone(target_face, out, ~mask, center, cv2.MIXED_CLONE)
     modified_img = originalTarget.copy()
-    modified_img[y_corner:y_corner + target.shape[1], x_corner:x_corner + target.shape[0]] = out
-    #blended_target = originalTarget[x_corner:target.shape[0], y_corner:target.shape[1], :]
-    #blended_target = originalTarget[x_corner:x_corner+target.shape[0], y_corner:y_corner+target.shape[1], :]
-    #blended_target = originalTarget[y_corner:y_corner+target.shape[1], x_corner:x_corner+target.shape[0], :]
+    modified_img[y_corner:y_corner + target_face.shape[1], x_corner:x_corner + target_face.shape[0]] = out
+    #blended_target = originalTarget[x_corner:target_face.shape[0], y_corner:target_face.shape[1], :]
+    #blended_target = originalTarget[x_corner:x_corner+target_face.shape[0], y_corner:y_corner+target_face.shape[1], :]
+    #blended_target = originalTarget[y_corner:y_corner+target_face.shape[1], x_corner:x_corner+target_face.shape[0], :]
     # modified_img = cv2.seamlessClone(blended_target,
     #                                  modified_img, mask, center,cv2.NORMAL_CLONE)
 
@@ -44,11 +47,11 @@ def modified_poisson_blending(source_face, target, mask, originalTarget, x_corne
 
     F = np.zeros(source_face.shape)
     for i in range(3):
-        F[:,:,i] = poisson_gray(source_face[:,:,i], target[:,:,i], mask)
+        F[:,:,i] = poisson_gray(source_face[:,:,i], target_face[:, :, i], mask)
     np.logical_not(mask, out=mask)
 
     for i in range(3):
-        F[:,:,i] = poisson_gray(target[:,:,i], F[:,:,i], mask)
+        F[:,:,i] = poisson_gray(target_face[:, :, i], F[:, :, i], mask)
     plt.imshow(F/(-1e16))
     plt.show()
     modified_img = originalTarget.copy()

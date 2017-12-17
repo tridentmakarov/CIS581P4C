@@ -46,7 +46,7 @@ def poisson_gray(source, target, mask):
          roll_sparse(I, 1, 1) + roll_sparse(I, -1, 1)
     A += sparse.eye(n) - I
     b = np.zeros(n)
-    b[bx] = target[bx]
+    b[bx.flatten()] = target[bx]
 
     print "Roll"
     laplacian_target = np.roll(target, (1, 0), (0,1)) + np.roll(target, (1, 0), (0,-1)) +\

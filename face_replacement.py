@@ -41,7 +41,7 @@ def face_replacement(source_vid, target_vid):
     #oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
     oldPointsTarget = cv2.goodFeaturesToTrack(grayTarget, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
 
-    print oldPointsTarget.shape
+    print "OldPointsTarget.shape ", oldPointsTarget.shape
     # plt.imshow(np.uint8(replacement_faces_ims[0] * 255))
     # plt.scatter(oldPoints[:, 0, 0], oldPoints[:, 0, 1])
     #
@@ -113,8 +113,9 @@ def face_replacement(source_vid, target_vid):
                 #mask[bboxPolygonSource[0, 1]: bboxPolygonSource[2, 1],
                 #bboxPolygonSource[0, 0]: bboxPolygonSource[2, 0]] = 0
                 mask = find_foreground_whole_im(face)
-                print mask.shape
+                print "mask.shape: ", mask.shape
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], mask, modified_img, xR, yR)
+                print "Done modifying"
 
             '''SHOW THE FEATURE POINTS'''
             plt.imshow(modified_img)
@@ -157,6 +158,7 @@ def find_foreground(im, rect):
 
     return mask
 
+# From https://stackoverflow.com/questions/37363875/matlab-transformpointsforward-equivalent-in-python
 def forwardAffineTransform(T,v1,v2):
     v1 = np.transpose(v1)
     v2 = np.transpose(v2)

@@ -17,12 +17,13 @@ def modified_poisson_blending(source_face, target, mask, originalTarget, x_corne
     modified_img = originalTarget.copy()
     out = np.zeros(target.shape)
     center = (y_corner + target.shape[1], x_corner + target.shape[0])
-
+    print "inited"
     #cv2.seamlessClone(source_face, target, mask, (target.shape[1]//2,  target.shape[0]//2) ,out)
     #cv2.seamlessClone(source_face, target, mask, (47,47), out)
     out = cv2.seamlessClone(source_face, originalTarget, (mask.astype(np.uint8)*255), center, cv2.NORMAL_CLONE)
+    print "Cloned"
     modified_img[y_corner:y_corner + source_face.shape[1],
-    x_corner:x_corner + source_face.shape[0], :] = out
+        x_corner:x_corner + source_face.shape[0], :] = out
     return modified_img
 
     F = np.zeros(source_face.shape)

@@ -30,20 +30,20 @@ def get_face_landmarks(image, rect):
         # determine the facial landmarks for the face region, then
         # convert the facial landmark (x, y)-coordinates to a NumPy
         # array
-        shape = predictor(gray, rect)
-        shape = face_utils.shape_to_np(shape)
+        im_shape = predictor(gray, rect)
+        im_shape = face_utils.shape_to_np(im_shape)
         
         # convert dlib's rectangle to a OpenCV-style bounding box
         # [i.e., (x, y, w, h)], then draw the face bounding box
-        (x, y, w, h) = face_utils.rect_to_bb(rect)
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # (x, y, w, h) = face_utils.rect_to_bb(rect)
+        # cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
         
         # show the face number
         
         
         # loop over the (x, y)-coordinates for the facial landmarks
         # and draw them on the image
-    return shape
+    return im_shape
 
 
 #Based partly on http://www.learnopencv.com/face-morph-using-opencv-cpp-python/ and other articles on website
@@ -73,6 +73,7 @@ def align_source_face_to_target(source_im, target_im):
     transform = skimage.transform.PiecewiseAffineTransform()
     transform.estimate(source_hull_points, target_hull_points)
     warp = skimage.transform.warp(source_im, transform)
+    
 
     return warp
 

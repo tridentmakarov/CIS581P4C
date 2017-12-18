@@ -67,8 +67,9 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
 
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
     
-        
+        # target = resize(target, source.shape)
         # plt.imshow(source[y - buf: y + w + buf, x - buf: x + w + buf])
+        # plt.imshow(target)
         # plt.show()
         modified_img = align_source_face_to_target(source, target)
         

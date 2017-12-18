@@ -15,8 +15,8 @@ def detect_faces(img):
 
 def face_replacement(source_vid, target_vid, out_filename, filterImg):
 
-    buf = 30
-    buf2 = 40
+    buf = 0
+    buf2 = 0
 
     source = source_vid.get_data(0)
     target = target_vid.get_data(0)

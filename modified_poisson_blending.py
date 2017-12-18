@@ -15,7 +15,10 @@ def modified_poisson_blending(source_face, target_face, mask, original_target, l
         source_face *= 255
         source_face = source_face.astype(np.uint8)
 
+    unmasked_pixels_y, unmasked_pixels_x = np.where(mask > 0)
+
     #center = (x + w//2 + 10, y + h//2 + 10)
-    center = (original_target.shape[0]//2, original_target.shape[1]//2)
+    center = (np.mean([np.max(unmasked_pixels_x), np.min(unmasked_pixels_x)]).astype(int),
+              np.mean([np.max(unmasked_pixels_y), np.min(unmasked_pixels_y)]).astype(int))
     #return cv2.seamlessClone(source_face, original_target, mask, center, cv2.MIXED_CLONE)
     return cv2.seamlessClone(source_face, original_target, mask, center, cv2.MIXED_CLONE)

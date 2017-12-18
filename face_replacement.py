@@ -58,12 +58,8 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
 
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
         warped_source, mask, location = align_source_face_to_target(source, target)
-        temp_target = target.copy()
-        temp_target[mask > 0] = (warped_source * 255).astype(np.uint8)[mask > 0]
-        cv2.imshow("Layered", cv2.cvtColor(temp_target, cv2.COLOR_RGB2BGR))
         modified_img = MPB(warped_source, None, mask, target, location)
-        plt.imshow(modified_img)
-        plt.show()
+
 
         newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
 

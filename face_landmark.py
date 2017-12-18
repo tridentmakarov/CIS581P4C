@@ -43,6 +43,10 @@ def align_source_face_to_target(source_im, target_im, debug=False):
     source_landmarks = source_landmarks[0]
     target_landmarks = target_landmarks[0]
     target_location = target_locations[0]
+
+    #Use internal points
+    target_location = np.mean(target_landmarks[17:61], axis=0).astype(np.int)
+    print target_location
     source_location = source_locations[0]
 
     if debug:
@@ -60,8 +64,8 @@ def align_source_face_to_target(source_im, target_im, debug=False):
     target_hull_points = np.squeeze(target_landmarks[target_convex_hull])
 
     transform = skimage.transform.PiecewiseAffineTransform()
-    #transform.estimate(target_landmarks, source_landmarks)
-    transform.estimate(target_hull_points, source_hull_points)
+    transform.estimate(target_landmarks, source_landmarks)
+    #transform.estimate(target_hull_points, source_hull_points)
 
     warp = skimage.transform.warp(source_im, transform, output_shape=target_im.shape[:2])
     mask = skimage.transform.warp(np.full(source_im.shape[:2], 255, dtype=np.uint8), transform,
@@ -72,5 +76,3 @@ def align_source_face_to_target(source_im, target_im, debug=False):
         plt.imshow(mask)
         plt.show()
     return warp, mask, target_location
-
-

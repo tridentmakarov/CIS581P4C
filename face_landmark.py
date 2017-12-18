@@ -11,10 +11,10 @@ from imutils import face_utils
 predictor_path = "resources/shape_predictor_68_face_landmarks.dat"
 predictor = dlib.shape_predictor(predictor_path)
 
-def get_face_landmarks(image, rect):
+def get_face_landmarks(image):
     
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor("resources/shape_predictor_68_face_landmarks.dat")
+    #predictor = dlib.shape_predictor("resources/shape_predictor_68_face_landmarks.dat")
     
     # load the input image, resize it, and convert it to grayscale
     # image = cv2.imread(args["image"])
@@ -24,15 +24,14 @@ def get_face_landmarks(image, rect):
     
     # detect faces in the grayscale image
     rects = detector(gray, 1)
-    
+    im_shape = []
     # loop over the face detections
     for (i, rect) in enumerate(rects):
         # determine the facial landmarks for the face region, then
         # convert the facial landmark (x, y)-coordinates to a NumPy
         # array
-        im_shape = predictor(gray, rect)
-        im_shape = face_utils.shape_to_np(im_shape)
-        
+        im_shape.append(face_utils.shape_to_np(predictor(gray, rect)))
+
         # convert dlib's rectangle to a OpenCV-style bounding box
         # [i.e., (x, y, w, h)], then draw the face bounding box
         # (x, y, w, h) = face_utils.rect_to_bb(rect)
@@ -49,9 +48,11 @@ def get_face_landmarks(image, rect):
 #Based partly on http://www.learnopencv.com/face-morph-using-opencv-cpp-python/ and other articles on website
 def align_source_face_to_target(source_im, target_im):
     # https: // www.pyimagesearch.com / 2017 / 04 / 03 / facial - landmarks - dlib - opencv - python /
-    source_landmarks = np.array(get_face_landmarks(source_im, (0,0, source_im.shape[1], source_im.shape[0])))
-    target_landmarks = np.array(get_face_landmarks(target_im, (0,0, target_im.shape[1], target_im.shape[0])))
+    #source_landmarks = np.array(get_face_landmarks(source_im, (0,0, source_im.shape[1], source_im.shape[0])))
+    #target_landmarks = np.array(get_face_landmarks(target_im, (0,0, target_im.shape[1], target_im.shape[0])))
 
+    source_landmarks = get_face_landmarks(source_im)[0]
+    target_landmarks = get_face_landmarks(target_im)[0]
     plt.imshow(source_im)
     plt.scatter(source_landmarks[:,0], source_landmarks[:,1])
     plt.show()
@@ -72,6 +73,7 @@ def align_source_face_to_target(source_im, target_im):
 
     transform = skimage.transform.PiecewiseAffineTransform()
     transform.estimate(source_hull_points, target_hull_points)
+    #transform.estimate(source_hull_points, target_hull_points)
     warp = skimage.transform.warp(source_im, transform)
     mask = skimage.transform.warp(np.full(source_im.shape[:2], 255, dtype=np.uint8), transform)
     plt.imshow(warp)

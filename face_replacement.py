@@ -15,6 +15,8 @@ def detect_faces(img):
 
 def face_replacement(source_vid, target_vid, out_filename, filterImg):
 
+    buf = 30
+    buf2 = 40
 
     source = source_vid.get_data(0)
     target = target_vid.get_data(0)
@@ -28,7 +30,7 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
     (x,y,w,h) = source_faces[0]
     (xR, yR, wR, hR) = target_faces[0]
 
-    replacement_face = source[y:y+h, x:x+w]
+    replacement_face = source[y-buf2:y+h+buf2, x-buf2:x+w+buf2]
     replacement_faces_ims_source = [resize(replacement_face, (hR, wR)) for (xR, yR, wR, hR)
                                     in target_faces]
 
@@ -135,9 +137,9 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
                 mask[:] = 1
             for (xR,yR, wR,hR), face in zip(target_faces, replacement_faces_ims_source):
                 #im_mask = np.ones(face.shape[:2], dtype=np.bool)
-                im_mask = resize(mask[y:y+h, x:x+w], face.shape[:2])
+                im_mask = resize(mask[y-buf:y+h+buf, x-buf:x+w+buf], face.shape[:2])
 
-                modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
+                modified_img = MPB(face, target[yR - buf:yR+hR + buf, xR - buf:xR+wR + buf], im_mask, modified_img, xR, yR)
                 if np.any(filterImg):
                     curr_filterImg = (transform.warp(filterImg[:, :, :], tform3, output_shape=filterImg.shape[1::-1]))
                     curr_filterImg[:, :, 0:2] *= 255

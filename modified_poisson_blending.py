@@ -16,7 +16,7 @@ def modified_poisson_blending(source_face, target_face, mask, originalTarget, x_
     #     target_face /= 255
     #mask = mask.astype(float)
 
-    aligned_source = face_landmark.align_source_face_to_target(source_face, target_face)
+    source_face = face_landmark.align_source_face_to_target(source_face, target_face)
     mask = mask.astype(np.uint8) * 255
     print source_face.dtype
     if not source_face.dtype == np.uint8:

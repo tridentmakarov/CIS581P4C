@@ -32,12 +32,9 @@ def align_source_face_to_target(source_im, target_im):
     target_hull_points[:, 0] = np.clip(target_hull_points[:, 0], 0, target_im.shape[0] - 1)
     target_hull_points[:, 1] = np.clip(target_hull_points[:, 1], 0, target_im.shape[1] - 1)
 
-    plt.imshow(source_im)
-    plt.scatter(source_hull_points[:, 0], source_hull_points[:, 1])
-    plt.show()
     source_delaunay = Delaunay(source_hull_points)
-    target_delaunay = copy.deepcopy(source_delaunay)
-    target_delaunay.points = target_hull_points.astype(np.float)
+    #target_delaunay = copy.deepcopy(source_delaunay)
+    #target_delaunay.points = target_hull_points.astype(np.float)
     transforms = [cv2.getAffineTransform(source_hull_points[simplex].astype(np.float32),
                                          target_hull_points[simplex].astype(np.float32))
                   for simplex in source_delaunay.simplices]
@@ -72,9 +69,6 @@ def align_source_face_to_target(source_im, target_im):
 
         warped_source[target_bound[1]:target_bound[1] + target_bound[3], target_bound[0]:target_bound[0] + target_bound[2]] +=\
             im_triangle
-
-        plt.imshow(warped_source)
-        plt.show()
 
     return warped_source
 

@@ -13,7 +13,9 @@ def detect_faces(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return face_cascade.detectMultiScale(gray, 1.3, 5)
 
-def face_replacement(source_vid, target_vid, out_filename):
+def face_replacement(source_vid, target_vid, out_filename, filterImg):
+
+
     source = source_vid.get_data(0)
     target = target_vid.get_data(0)
     trackedVideo = imageio.get_writer(out_filename, fps=source_vid._meta['fps'])
@@ -30,6 +32,11 @@ def face_replacement(source_vid, target_vid, out_filename):
     replacement_faces_ims_source = [resize(replacement_face, (hR, wR)) for (xR, yR, wR, hR)
                                     in target_faces]
 
+    if np.any(filterImg):
+        filterImg = resize(filterImg, [wR,hR, 4])
+
+        # plt.imshow(filterImg)
+        # plt.show()
 
     bboxPolygonsSource = [np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]]) for (x, y, w, h) in source_faces]
     bboxTarget = [np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]]) for (xR, yR, wR, hR) in target_faces]
@@ -83,6 +90,8 @@ def face_replacement(source_vid, target_vid, out_filename):
             tform3.estimate(newPointsT[:, 0, :], oldPointsT[:, 0, :])
             matrix = tform3._inv_matrix
 
+
+
             bboxesOut = [forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2),
                                                 np.array(bboxPolygonTarget[:, 1], ndmin=2))
                          for bboxPolygonTarget in bboxTarget]
@@ -129,6 +138,17 @@ def face_replacement(source_vid, target_vid, out_filename):
                 im_mask = resize(mask[y:y+h, x:x+w], face.shape[:2])
 
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
+                if np.any(filterImg):
+                    filterImg = (tf.warp(filterImg[:, :, :], tform3, output_shape=filterImg.shape[1::-1]))
+                    filterImg[:, :, 0:2] *= 255
+
+                    for i in range(wR):
+                        for j in range(hR):
+                            modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-filterImg[i, j, 3]) + filterImg[i, j, 0] * (filterImg[i, j, 3])
+                            modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-filterImg[i, j, 3]) + filterImg[i, j, 1] * (filterImg[i, j, 3])
+                            modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-filterImg[i, j, 3]) + filterImg[i, j, 2] * (filterImg[i, j, 3])
+
+
 
             '''SHOW FACE SWAPPED IMAGE'''
             fig = plt.figure()

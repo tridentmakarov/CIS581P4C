@@ -2,7 +2,7 @@ import cv2
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage import transform as tf
+from skimage import transform as transform
 from skimage.transform import resize
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from modified_poisson_blending import modified_poisson_blending as MPB
@@ -86,7 +86,7 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
             newWarpTarget = np.reshape(goodNew[useable[0], :], (-1, 2))
             oldWarpTarget = np.reshape(goodOld[useable[0], :], (-1, 2))
 
-            tform3 = tf.ProjectiveTransform()
+            tform3 = transform.ProjectiveTransform()
             tform3.estimate(newPointsT[:, 0, :], oldPointsT[:, 0, :])
             matrix = tform3._inv_matrix
 
@@ -139,14 +139,14 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
 
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
                 if np.any(filterImg):
-                    filterImg = (tf.warp(filterImg[:, :, :], tform3, output_shape=filterImg.shape[1::-1]))
-                    filterImg[:, :, 0:2] *= 255
+                    curr_filterImg = (transform.warp(filterImg[:, :, :], tform3, output_shape=filterImg.shape[1::-1]))
+                    curr_filterImg[:, :, 0:2] *= 255
 
                     for i in range(wR):
                         for j in range(hR):
-                            modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-filterImg[i, j, 3]) + filterImg[i, j, 0] * (filterImg[i, j, 3])
-                            modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-filterImg[i, j, 3]) + filterImg[i, j, 1] * (filterImg[i, j, 3])
-                            modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-filterImg[i, j, 3]) + filterImg[i, j, 2] * (filterImg[i, j, 3])
+                            modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-curr_filterImg[i, j, 3]) + curr_filterImg[i, j, 0] * (curr_filterImg[i, j, 3])
+                            modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-curr_filterImg[i, j, 3]) + curr_filterImg[i, j, 1] * (curr_filterImg[i, j, 3])
+                            modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-curr_filterImg[i, j, 3]) + curr_filterImg[i, j, 2] * (curr_filterImg[i, j, 3])
 
 
 

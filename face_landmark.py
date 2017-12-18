@@ -27,6 +27,14 @@ def align_source_face_to_target(source_im, target_im):
     source_hull_points = np.squeeze(source_landmarks[source_convex_hull])
     target_hull_points = np.squeeze(target_landmarks[target_convex_hull])
 
+    source_hull_points[:, 0] = np.clip(source_hull_points[:, 0], 0, source_im.shape[0] - 1)
+    source_hull_points[:, 1] = np.clip(source_hull_points[:, 1], 0, source_im.shape[1] - 1)
+    target_hull_points[:, 0] = np.clip(target_hull_points[:, 0], 0, target_im.shape[0] - 1)
+    target_hull_points[:, 1] = np.clip(target_hull_points[:, 1], 0, target_im.shape[1] - 1)
+
+    plt.imshow(source_im)
+    plt.scatter(source_hull_points[:, 0], source_hull_points[:, 1])
+    plt.show()
     source_delaunay = Delaunay(source_hull_points)
     target_delaunay = copy.deepcopy(source_delaunay)
     target_delaunay.points = target_hull_points.astype(np.float)
@@ -42,14 +50,6 @@ def align_source_face_to_target(source_im, target_im):
         target_tri = target_hull_points[simplex]
         source_bound = list(cv2.boundingRect(source_tri))
         target_bound = list(cv2.boundingRect(target_tri))
-        if target_bound[0] + target_bound[2] > warped_source.shape[0]:
-            print "correcting y"
-            target_bound[2] -= target_bound[0] + target_bound[2] - warped_source.shape[0]
-            target_bound[2] = max(0, target_bound[2])
-        if target_bound[1] + target_bound[3] > warped_source.shape[1]:
-            print "correcting x"
-            target_bound[3] -= target_bound[1] + target_bound[3] - warped_source.shape[1]
-            target_bound[3] = max(0, target_bound[3])
 
         source_tri_cropped = []
         target_tri_cropped = []

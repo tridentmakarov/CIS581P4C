@@ -72,10 +72,12 @@ def align_source_face_to_target(source_im, target_im):
     # target_hull_points[:, 1] = np.clip(target_hull_points[:, 1], 0, target_im.shape[1] - 1)
 
     transform = skimage.transform.PiecewiseAffineTransform()
-    transform.estimate(source_hull_points, target_hull_points)
+    #transform.estimate(source_landmarks, target_landmarks)
+    transform.estimate(target_landmarks, source_landmarks)
     #transform.estimate(source_hull_points, target_hull_points)
-    warp = skimage.transform.warp(source_im, transform)
-    mask = skimage.transform.warp(np.full(source_im.shape[:2], 255, dtype=np.uint8), transform)
+    warp = skimage.transform.warp(source_im, transform, output_shape=target_im.shape[:2])
+    mask = skimage.transform.warp(np.full(source_im.shape[:2], 255, dtype=np.uint8), transform,
+                                  output_shape=target_im.shape[:2])
     plt.imshow(warp)
     plt.show()
     plt.imshow(mask)

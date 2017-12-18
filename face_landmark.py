@@ -23,6 +23,13 @@ def align_source_face_to_target(source_im, target_im):
     source_landmarks = np.array(get_face_landmarks(source_im, (0,0, source_im.shape[1], source_im.shape[0])))
     target_landmarks = np.array(get_face_landmarks(target_im, (0,0, target_im.shape[1], target_im.shape[0])))
 
+    plt.imshow(source_im)
+    plt.scatter(source_landmarks[:,0], source_landmarks[:,1])
+    plt.show()
+    plt.imshow(target_im)
+    plt.scatter(target_landmarks[:,0], target_landmarks[:,1])
+    plt.show()
+
     source_convex_hull = cv2.convexHull(source_landmarks, returnPoints = False)
     #target_convex_hull = cv2.convexHull(target_landmarks, returnPoints = False)
     target_convex_hull = source_convex_hull

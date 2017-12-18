@@ -6,6 +6,7 @@ from skimage import transform as transform
 from skimage.transform import resize
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from modified_poisson_blending import modified_poisson_blending as MPB
+from face_landmark import align_source_face_to_target
 
 
 def detect_faces(img):
@@ -15,7 +16,7 @@ def detect_faces(img):
 
 def face_replacement(source_vid, target_vid, out_filename, filterImg):
 
-    buf = 0
+    buf = 40
     buf2 = 0
 
     source = source_vid.get_data(0)
@@ -65,6 +66,17 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
     oldTarget = target
 
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
+    
+        
+        # plt.imshow(source[y - buf: y + w + buf, x - buf: x + w + buf])
+        # plt.show()
+        modified_img = align_source_face_to_target(source[y - buf: y + h + buf, x - buf: x + w + buf], target[yR - buf2: yR + hR + buf2, xR - buf2: xR + wR + buf2])
+        
+        plt.imshow(modified_img)
+        plt.show()
+
+        # [x - buf: x + w + buf, y - buf: y + w + buf]
+        # [xR - buf: xR + wR + buf, yR - buf: yR + wR + buf]
 
         newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
 

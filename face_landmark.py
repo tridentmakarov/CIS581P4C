@@ -11,7 +11,7 @@ from imutils import face_utils
 predictor_path = "resources/shape_predictor_68_face_landmarks.dat"
 predictor = dlib.shape_predictor(predictor_path)
 
-def get_face_landmarks(image, rect):
+def get_face_landmarks(image):
     
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor("resources/shape_predictor_68_face_landmarks.dat")
@@ -49,8 +49,10 @@ def get_face_landmarks(image, rect):
 #Based partly on http://www.learnopencv.com/face-morph-using-opencv-cpp-python/ and other articles on website
 def align_source_face_to_target(source_im, target_im):
     # https: // www.pyimagesearch.com / 2017 / 04 / 03 / facial - landmarks - dlib - opencv - python /
-    source_landmarks = np.array(get_face_landmarks(source_im, (0,0, source_im.shape[1], source_im.shape[0])))
-    target_landmarks = np.array(get_face_landmarks(target_im, (0,0, target_im.shape[1], target_im.shape[0])))
+    source_landmarks = get_face_landmarks(source_im)
+    target_landmarks = get_face_landmarks(target_im)
+
+    M = transformation_from_points(source_landmarks, target_landmarks)
 
     plt.imshow(source_im)
     plt.scatter(source_landmarks[:,0], source_landmarks[:,1])
@@ -78,6 +80,41 @@ def align_source_face_to_target(source_im, target_im):
     plt.show()
     plt.imshow(mask)
     plt.show()
+    
+    
+    
     return warp, mask
+
+# https://matthewearl.github.io/2015/07/28/switching-eds-with-python/
+def transformation_from_points(points1, points2):
+    points1 = np.asmatrix(points1, np.float64)
+    points2 = np.asmatrix(points2, np.float64)
+
+    c1 = np.mean(points1, axis=0)
+    c2 = np.mean(points2, axis=0)
+    points1 -= c1
+    points2 -= c2
+
+    s1 = np.std(points1)
+    s2 = np.std(points2)
+    points1 /= s1
+    points2 /= s2
+
+    U, S, Vt = np.linalg.svd(points1.T * points2)
+    R = (U * Vt).T
+
+    return np.vstack([np.hstack(((s2 / s1) * R,
+                                       c2.T - (s2 / s1) * R * c1.T)),
+                         np.matrix([0., 0., 1.])])
+
+def warp_im(im, M, dshape):
+    output_im = np.zeros(dshape, dtype=im.dtype)
+    cv2.warpAffine(im,
+                   M[:2],
+                   (dshape[1], dshape[0]),
+                   dst=output_im,
+                   borderMode=cv2.BORDER_TRANSPARENT,
+                   flags=cv2.WARP_INVERSE_MAP)
+    return output_im
 
 

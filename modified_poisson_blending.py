@@ -7,7 +7,8 @@ from skimage.transform import resize
 from roll_sparse import roll_sparse
 import face_landmark
 
-def modified_poisson_blending(source_face, target_face, mask, original_target, x_corner, y_corner):
+def modified_poisson_blending(source_face, target_face, mask, original_target, location):
+    (x, y, w, h) = location
     # if not source_face.dtype == float:
     #     source_face = source_face.astype(float)
     #     source_face /= 255
@@ -16,7 +17,7 @@ def modified_poisson_blending(source_face, target_face, mask, original_target, x
     #     target_face /= 255
     #mask = mask.astype(float)
 
-    source_face = face_landmark.align_source_face_to_target(source_face, target_face)
+    #source_face = face_landmark.align_source_face_to_target(source_face, target_face)
     mask = mask.astype(np.uint8) * 255
     print source_face.dtype
     if not source_face.dtype == np.uint8:
@@ -25,18 +26,21 @@ def modified_poisson_blending(source_face, target_face, mask, original_target, x
         source_face *= 255
         source_face = source_face.astype(np.uint8)
 
-    if not target_face.dtype == np.uint8:
-        target_face = target_face.copy()
-        target_face *= 255
-        target_face = target_face.astype(np.uint8)
+    # if not target_face.dtype == np.uint8:
+    #     target_face = target_face.copy()
+    #     target_face *= 255
+    #     target_face = target_face.astype(np.uint8)
 
     #center = (x_corner + target_face.shape[0]//2, y_corner + target_face.shape[1]//2)
-    center = (target_face.shape[0] // 2, target_face.shape[1] // 2)
+    #center = (target_face.shape[0] // 2, target_face.shape[1] // 2)
+    center = (x + w//2, y + h//2)
     #modified_img = cv2.seamlessClone(source_face, original_target, mask, center,cv2.MIXED_CLONE)
-    out = cv2.seamlessClone(source_face, target_face, mask, center, cv2.MIXED_CLONE)
-    out = cv2.seamlessClone(target_face, out, ~mask, center, cv2.MIXED_CLONE)
+    return cv2.seamlessClone(source_face, original_target, mask, center, cv2.MIXED_CLONE)
+    #out = cv2.seamlessClone(source_face, target_face, mask, center, cv2.MIXED_CLONE)
+    #out = cv2.seamlessClone(target_face, out, ~mask, center, cv2.MIXED_CLONE)
     modified_img = original_target.copy()
-    modified_img[y_corner:y_corner + target_face.shape[1], x_corner:x_corner + target_face.shape[0]] = out
+    #modified_img[y_corner:y_corner + target_face.shape[1], x_corner:x_corner + target_face.shape[0]] = out
+    modified_img[y:y + h, x:x + w] = out
     #blended_target = original_target[x_corner:target_face.shape[0], y_corner:target_face.shape[1], :]
     #blended_target = original_target[x_corner:x_corner+target_face.shape[0], y_corner:y_corner+target_face.shape[1], :]
     #blended_target = original_target[y_corner:y_corner+target_face.shape[1], x_corner:x_corner+target_face.shape[0], :]

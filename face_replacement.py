@@ -130,7 +130,7 @@ def face_replacement(source_vid, target_vid, out_filename):
 
                 modified_img = MPB(face, target[yR:yR+hR, xR:xR+wR], im_mask, modified_img, xR, yR)
 
-            '''SHOW THE FEATURE POINTS'''
+            '''SHOW FACE SWAPPED IMAGE'''
             fig = plt.figure()
             plt.imshow(modified_img)
             plt.show()
@@ -149,7 +149,7 @@ def face_replacement(source_vid, target_vid, out_filename):
             # plt.close(fig)
 
         oldTarget = newTarget
-        print i
+        print "Frame", i
 
     # for i, (x,y,w,h), face in zip(target_faces, replacement_faces_ims):
     #     face_im = (face * 255).astype(np.uint8)

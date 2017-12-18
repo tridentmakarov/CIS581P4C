@@ -16,6 +16,7 @@ import face_replacement
 from stabilize import stabilize
 
 
+
 video1 = imageio.get_reader("resources/Easy/FrankUnderwood.mp4")
 video2 = imageio.get_reader("resources/Easy/MrRobot.mp4")
 out_filename = "resources/OutputVideo.mp4"

@@ -70,13 +70,13 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
         
         # plt.imshow(source[y - buf: y + w + buf, x - buf: x + w + buf])
         # plt.show()
-        modified_img = align_source_face_to_target(source[y - buf: y + h + buf, x - buf: x + w + buf], target[yR - buf2: yR + hR + buf2, xR - buf2: xR + wR + buf2])
+        modified_img = align_source_face_to_target(source, target)
         
         plt.imshow(modified_img)
         plt.show()
 
-        # [x - buf: x + w + buf, y - buf: y + w + buf]
-        # [xR - buf: xR + wR + buf, yR - buf: yR + wR + buf]
+        # [y - buf: y + h + buf, x - buf: x + w + buf]
+        # [yR - buf2: yR + hR + buf2, xR - buf2: xR + wR + buf2]
 
         newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
 

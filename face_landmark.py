@@ -68,10 +68,11 @@ def align_source_face_to_target(source_im, target_im, tracked_points=None, opt_f
     transform.estimate(target_landmarks, source_landmarks)
     #transform.estimate(target_hull_points, source_hull_points)
 
+    source_mask = np.concatenate((source_im, np.full(source_im.shape[:2] + (1,), 255, dtype=np.uint8)), axis=2)
+    warped_source_mask = skimage.transform.warp(source_mask, transform, output_shape=target_im.shape[:2])
 
-    warp = skimage.transform.warp(source_im, transform, output_shape=target_im.shape[:2])
-    mask = skimage.transform.warp(np.full(source_im.shape[:2], 255, dtype=np.uint8), transform,
-                                  output_shape=target_im.shape[:2])
+    warp = warped_source_mask[:,:,:3]
+    mask = warped_source_mask[:,:,3]
     if debug:
         plt.imshow(warp)
         plt.show()

@@ -68,9 +68,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
         else:
             j += 1
 
-            # target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(oldTarget, target, np.array(target_landmarks), None,
-            #                                                       **lk_params)
-
             if len(source_landmarks) == 0:
                 source_landmarks = old_source_landmarks
 

@@ -18,8 +18,8 @@ def detect_faces(img):
 
 def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=False):
 
-    source = next(source_vid)
-    target = next(target_vid)
+    source = source_vid.get_next_data()
+    target = target_vid.get_next_data()
 
     s_fps = source_vid._meta['fps']
     t_fps = target_vid._meta['fps']
@@ -36,32 +36,39 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
     j=0
 
     old_source_landmarks = []
-    points = []
+    points_list = []
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
-        current_points = None
-        if i % 25 == 0:
-            landmarks = get_face_landmarks(target)
-            current_points = {"points":landmarks, "good_points":np.ones_like(landmarks, dtype=bool)}
-        else:
-            gray = to_gray(target)
-            old_point = points[-1]
-            new_pts = np.zeros_like(old_point["points"])
-            new_state = old_point["good_points"].copy()
-
-            new_pts[old_point["good_points"]], new_state[old_point["good_points"]], err = \
-                cv2.calcOpticalFlowPyrLK(old_gray, gray, old_point["points"][old_point["good_points"]], None)
-            current_points = {"points": new_pts, "good_points": new_state}
-        points.append(current_points)
-
         source_landmarks, source_locations = get_face_landmarks(source)
         target_landmarks, target_locations = get_face_landmarks(target)
+
+        all_points_lost = [np.all(~points['good_points']) for points in points_list[-1]]
+
+        if i % 25 == 0 or any(all_points_lost):
+            landmarks, locs = get_face_landmarks(target)
+            current_points = [{"points":landmarks, "good_points":np.ones(landmark.shape[0], dtype=bool)} for landmark in landmarks]
+        else:
+            gray = to_gray(target)
+            current_points = []
+            for old_point in points_list[-1]:
+                new_pts = np.zeros_like(old_point["points"])
+                new_state = old_point["good_points"].copy()
+
+                new_pts[old_point["good_points"]], st, err = \
+                    cv2.calcOpticalFlowPyrLK(old_gray, gray, old_point["points"][old_point["good_points"]], None)
+
+                new_state[old_point["good_points"]] = st == 1
+                current_points.append({"points": new_pts, "good_points": new_state})
+        points_list.append(current_points)
+
         if (len(source_landmarks) == 0 or len(target_landmarks) == 0) and j == 0:
             print "no faces found, skipping"
         else:
             j += 1
-
-            warped_source, mask = align_source_face_to_target(source, target, current_points)
-            modified_img = MPB(warped_source, None, mask, target)
+            modified_img = target.copy()
+            for points in current_points:
+                warped_source, mask = align_source_face_to_target(source, target, points)
+                if warped_source is not None:
+                    modified_img = MPB(warped_source, None, mask, modified_img)
             old_target = target
 
             # newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)

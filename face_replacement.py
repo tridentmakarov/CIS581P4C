@@ -14,7 +14,7 @@ def detect_faces(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return face_cascade.detectMultiScale(gray, 1.3, 5)
 
-def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=False):
+def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=False):
 
     source = source_vid.get_data(0)
     target = target_vid.get_data(0)
@@ -32,6 +32,7 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
     j=0
 
     old_source_landmarks = []
+    old_target_landmarks = []
 
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
 
@@ -44,18 +45,30 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
         else:
             j += 1
 
-            target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(oldTarget, target, target_landmarks, None,
-                                                                  **lk_params)
+            # target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(oldTarget, target, np.array(target_landmarks), None,
+            #                                                       **lk_params)
 
-            if len(source_landmarks) == 0 and j!=1:
+            if len(source_landmarks) == 0:
                 source_landmarks = old_source_landmarks
 
-            if len(target_landmarks) == 0 and j!=1:
+            if len(target_landmarks) == 0:
+                target_landmarks = old_target_landmarks
 
 
-
-            warped_source, mask = align_source_face_to_target(source, target, source_landmarks, target_landmarks)
+            warped_source, mask, filter_warp = align_source_face_to_target(source, target, source_landmarks, target_landmarks, filter_im)
             modified_img = MPB(warped_source, None, mask, target)
+
+            if np.any(filter_im):
+                xR, yR, wR, hR = target_locations[0]
+                filter_warp = np.resize(filter_warp, (wR, hR, filter_warp.shape[2]))
+
+                for i in range(wR):
+                    for j in range(hR):
+                        modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 0] * (filter_warp[i, j, 3])
+                        modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 1] * (filter_warp[i, j, 3])
+                        modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 2] * (filter_warp[i, j, 3])
+
+
             oldTarget = target
 
             # newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
@@ -125,14 +138,14 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
             #
             #         # modified_img = MPB(face, target[yR - buf:yR+hR + buf, xR - buf:xR+wR + buf], im_mask, modified_img, xR, yR)
             #         # if np.any(filterImg):
-            #         #     curr_filterImg = (transform.warp(filterImg[:, :, :], tform3, output_shape=filterImg.shape[1::-1]))
-            #         #     curr_filterImg[:, :, 0:2] *= 255
+            #         #     filter_warp = (transform.warp(filterImg[:, :, :], tform3, output_shape=filterImg.shape[1::-1]))
+            #         #     filter_warp[:, :, 0:2] *= 255
             #         #
             #         #     for i in range(wR):
             #         #         for j in range(hR):
-            #         #             modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-curr_filterImg[i, j, 3]) + curr_filterImg[i, j, 0] * (curr_filterImg[i, j, 3])
-            #         #             modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-curr_filterImg[i, j, 3]) + curr_filterImg[i, j, 1] * (curr_filterImg[i, j, 3])
-            #         #             modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-curr_filterImg[i, j, 3]) + curr_filterImg[i, j, 2] * (curr_filterImg[i, j, 3])
+            #         #             modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 0] * (filter_warp[i, j, 3])
+            #         #             modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 1] * (filter_warp[i, j, 3])
+            #         #             modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 2] * (filter_warp[i, j, 3])
             #         #
 
 

@@ -8,6 +8,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from modified_poisson_blending import modified_poisson_blending as MPB
 from face_landmark import align_source_face_to_target, get_face_landmarks
 
+#https://matthewearl.github.io/2015/07/28/switching-eds-with-python/
+
 def to_gray(rgb_image):
     return cv2.cvtColor(rgb_image, cv2.COLOR_RGB2GRAY)
 
@@ -46,24 +48,24 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
         source_landmarks, source_locations = get_face_landmarks(source)
         target_landmarks, target_locations = get_face_landmarks(target)
 
-        all_points_lost = [np.all(~points['good_points']) for points in points_list[-1]]
-
-        if i % 25 == 0 or any(all_points_lost):
-            landmarks, locs = get_face_landmarks(target)
-            current_points = [{"points":landmarks, "good_points":np.ones(landmark.shape[0], dtype=bool)} for landmark in landmarks]
-        else:
-            gray = to_gray(target)
-            current_points = []
-            for old_point in points_list[-1]:
-                new_pts = np.zeros_like(old_point["points"])
-                new_state = old_point["good_points"].copy()
-
-                new_pts[old_point["good_points"]], st, err = \
-                    cv2.calcOpticalFlowPyrLK(old_gray, gray, old_point["points"][old_point["good_points"]], None)
-
-                new_state[old_point["good_points"]] = st == 1
-                current_points.append({"points": new_pts, "good_points": new_state})
-        points_list.append(current_points)
+        # all_points_lost = [np.all(~points['good_points']) for points in points_list[-1]]
+        #
+        # if i % 25 == 0 or any(all_points_lost):
+        #     landmarks, locs = get_face_landmarks(target)
+        #     current_points = [{"points":landmarks, "good_points":np.ones(landmark.shape[0], dtype=bool)} for landmark in landmarks]
+        # else:
+        #     gray = to_gray(target)
+        #     current_points = []
+        #     for old_point in points_list[-1]:
+        #         new_pts = np.zeros_like(old_point["points"])
+        #         new_state = old_point["good_points"].copy()
+        #
+        #         new_pts[old_point["good_points"]], st, err = \
+        #             cv2.calcOpticalFlowPyrLK(old_gray, gray, old_point["points"][old_point["good_points"]], None)
+        #
+        #         new_state[old_point["good_points"]] = st == 1
+        #         current_points.append({"points": new_pts, "good_points": new_state})
+        # points_list.append(current_points)
 
         if (len(source_landmarks) == 0 or len(target_landmarks) == 0) and j == 0:
             print "no faces found, skipping"
@@ -80,12 +82,17 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 target_landmarks = old_target_landmarks
 
 
-            warped_source, mask, filter_warp = align_source_face_to_target(source, target, source_landmarks, target_landmarks, filter_im)
+            warped_source, mask = align_source_face_to_target(source, target, source_landmarks, target_landmarks, tracked_points=None)
             modified_img = MPB(warped_source, None, mask, target)
 
             if np.any(filter_im):
+                filter_im = np.array(filter_im*255).astype(np.uint8)
+                w, h = filter_im.shape[0], filter_im.shape[1]
+                filter_area = np.array([[0,0],[w, 0],[w, h], [0,w]]).astype(np.float32)
+                face_area = np.array(target_landmarks[0][[20, 25, 11, 7], :]).astype(np.float32)
                 xR, yR, wR, hR = target_locations[0]
-                filter_warp = np.resize(filter_warp, (wR, hR, filter_warp.shape[2]))
+                M = cv2.getPerspectiveTransform(face_area, filter_area)
+                filter_warp = cv2.warpPerspective(filter_im, M, (wR, hR))
 
                 for i in range(wR):
                     for j in range(hR):
@@ -181,13 +188,13 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
 
             '''SHOW FACE SWAPPED IMAGE'''
-            fig = plt.figure()
-            plt.imshow(modified_img)
-            plt.show()
+
             #
 
             # # Creating video frame (this code was adapted from imageio.readthedocs.io)
             '''
+            fig = plt.figure()
+            plt.imshow(modified_img)
             canvas = plt.get_current_fig_manager().canvas
             agg = canvas.switch_backends(FigureCanvasAgg)
             agg.draw()

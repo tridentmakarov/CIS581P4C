@@ -20,36 +20,6 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
     target = target_vid.get_data(0)
     trackedVideo = imageio.get_writer(out_filename, fps=source_vid._meta['fps'])
 
-    source_faces = detect_faces(source)
-    target_faces = detect_faces(target)
-    if source_faces.size == 0 or target_faces.size == 0:
-        raise ValueError("Face could not be detected in source image")
-
-    (x,y,w,h) = source_faces[0]
-    (xR, yR, wR, hR) = target_faces[0]
-
-    if np.any(filterImg):
-        filterImg = resize(filterImg, [wR,hR, 4])
-
-        # plt.imshow(filterImg)
-        # plt.show()
-
-    bboxPolygonsSource = [np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]]) for (x, y, w, h) in source_faces]
-    bboxTarget = [np.array([[xR, yR], [xR + wR, yR], [xR + wR, yR + hR], [xR, yR + hR]]) for (xR, yR, wR, hR) in target_faces]
-    #bboxPolygonTarget = bboxTarget[0]
-    old_bboxes = bboxTarget
-
-    # graySource = cv2.cvtColor(np.uint8(replacement_faces_ims_source[0]*255), cv2.COLOR_BGR2GRAY)
-    grayTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
-    # oldPointsSource = cv2.goodFeaturesToTrack(graySource, 50, 0.01, 8, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
-    targetMask = grayTarget[yR:yR+hR, xR:xR+wR]
-    targetFeaturesOld = cv2.goodFeaturesToTrack(targetMask, 100, 0.01, 10, mask=None, useHarrisDetector=False, blockSize=4, k=0.04)
-
-    # print targetFeaturesOld.shape
-    # plt.imshow(np.uint8(target * 255))
-    # plt.scatter(targetFeaturesOld[:, 0, 0]+xR, targetFeaturesOld[:, 0, 1]+yR)
-    # plt.show()
-
     lk_params = dict(winSize=(100, 100),
                      maxLevel=15,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))

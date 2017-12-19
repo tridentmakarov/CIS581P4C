@@ -22,7 +22,7 @@ out_filename = "resources/OutputVideo.mp4"
 filterIm1 = plt.imread("resources/CatEars.png")
 
 print "loaded"
-face_replacement.face_replacement(video1, video2, out_filename, filterImg=None)
+face_replacement.face_replacement(video1, video2, out_filename, filterImg=None, debug=False)
 print "face"
 outVideo = imageio.get_writer("resources/testOutput.mp4", fps=video1._meta['fps'])
 print "out"

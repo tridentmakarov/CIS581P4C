@@ -3,11 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def modified_poisson_blending(source_face, target_face, mask, original_target):
-    plt.imshow(source_face)
-    plt.show()
     #(x, y, w, h) = location
     mask = mask.astype(np.uint8) * 255
-    print source_face.dtype
     if not source_face.dtype == np.uint8:
         print "Changing dtype"
         source_face = source_face.copy()

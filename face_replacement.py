@@ -35,7 +35,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
     old_target = target
     old_gray = to_gray(target)
 
-    j=0
+    can_swap=0
 
     old_source_landmarks = []
     old_target_landmarks = []
@@ -63,10 +63,10 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 current_points.append({"points":new_pts, "good_points": new_state})
         points_list.append(current_points)
 
-        if (len(source_landmarks) == 0 or len(target_landmarks) == 0) and j == 0:
+        if (len(source_landmarks) == 0 or len(target_landmarks) == 0) and can_swap == 0:
             print "no faces found, skipping"
         else:
-            j += 1
+            can_swap =True
 
             # target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(oldTarget, target, np.array(target_landmarks), None,
             #                                                       **lk_params)
@@ -94,11 +94,11 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 M = cv2.getPerspectiveTransform(face_area, filter_area)
                 filter_warp = cv2.warpPerspective(filter_im, M, (wR, hR))
 
-                for i in range(wR):
-                    for j in range(hR):
-                        modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 0] * (filter_warp[i, j, 3])
-                        modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 1] * (filter_warp[i, j, 3])
-                        modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 2] * (filter_warp[i, j, 3])
+                for r in range(wR):
+                    for c in range(hR):
+                        modified_img[r + yR, c + xR, 0] = modified_img[r + yR, c + xR, 0] * (1-filter_warp[r, c, 3]) + filter_warp[r, c, 0] * (filter_warp[r, c, 3])
+                        modified_img[r + yR, c + xR, 1] = modified_img[r + yR, c + xR, 1] * (1-filter_warp[r, c, 3]) + filter_warp[r, c, 1] * (filter_warp[r, c, 3])
+                        modified_img[r + yR, c + xR, 2] = modified_img[r + yR, c + xR, 2] * (1-filter_warp[r, c, 3]) + filter_warp[r, c, 2] * (filter_warp[r, c, 3])
 
 
             oldTarget = target
@@ -191,29 +191,29 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             #         #
 
 
-            '''SHOW FACE SWAPPED IMAGE'''
+        '''SHOW FACE SWAPPED IMAGE'''
 
-            # Creating video frame (this code was adapted from imageio.readthedocs.io)
+        # Creating video frame (this code was adapted from imageio.readthedocs.io)
 
-            fig = plt.figure()
-            plt.imshow(modified_img)
+        fig = plt.figure()
+        plt.imshow(modified_img)
 
-            canvas = plt.get_current_fig_manager().canvas
-            agg = canvas.switch_backends(FigureCanvasAgg)
-            agg.draw()
-            s = agg.tostring_rgb()
-            l, b, w, h = agg.figure.bbox.bounds
-            w, h = int(w), int(h)
-            buf = np.fromstring(s, dtype=np.uint8)
-            buf.shape = h, w, 3
-            trackedVideo.append_data(buf)
-            plt.close(fig)
+        canvas = plt.get_current_fig_manager().canvas
+        agg = canvas.switch_backends(FigureCanvasAgg)
+        agg.draw()
+        s = agg.tostring_rgb()
+        l, b, w, h = agg.figure.bbox.bounds
+        w, h = int(w), int(h)
+        buf = np.fromstring(s, dtype=np.uint8)
+        buf.shape = h, w, 3
+        trackedVideo.append_data(buf)
+        plt.close(fig)
 
-            print "Frame", j
+        print "Frame", out_frame
 
 
-            old_source_landmarks = source_landmarks
-            old_target_landmarks = target_landmarks
+        old_source_landmarks = source_landmarks
+        old_target_landmarks = target_landmarks
 
 
 

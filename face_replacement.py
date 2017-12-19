@@ -6,7 +6,7 @@ from skimage import transform as transform
 from skimage.transform import resize
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from modified_poisson_blending import modified_poisson_blending as MPB
-from face_landmark import align_source_face_to_target, get_face_landmarks
+from face_landmark import align_source_face_to_target, get_face_landmarks, detect_face
 
 #https://matthewearl.github.io/2015/07/28/switching-eds-with-python/
 
@@ -32,17 +32,13 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                      maxLevel=15,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
-    old_target = target
     old_gray = to_gray(target)
 
     can_swap = False
 
-    old_source_landmarks = []
-    old_target_landmarks = []
-
     points_list = []
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
-        source_landmarks, source_locations = get_face_landmarks(source)
+        #source_landmarks, source_locations = get_face_landmarks(source)
         target_landmarks, target_locations = get_face_landmarks(target)
 
         gray = to_gray(target)
@@ -63,37 +59,26 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 current_points.append({"points":new_pts, "good_points": new_state})
         points_list.append(current_points)
 
-        can_swap = (len(source_landmarks) != 0 and len(target_landmarks) != 0)
+        old_gray = gray
+
+        can_swap = (detect_face(cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)) != 0 and len(target_landmarks) != 0)
 
         if not can_swap:
             modified_img = target
         else:
             can_swap = True
 
-            # target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(oldTarget, target, np.array(target_landmarks), None,
-            #                                                       **lk_params)
-
-            if len(source_landmarks) == 0:
-                source_landmarks = old_source_landmarks
-
-            if len(target_landmarks) == 0:
-                target_landmarks = old_target_landmarks
-
             modified_img = target.copy()
             for points in current_points:
                 warped_source, mask = align_source_face_to_target(source, target, points)
                 if warped_source is not None:
-                    modified_img = MPB(warped_source, None, mask, modified_img)
+                    modified_img = MPB(warped_source, mask, modified_img)
             if debug:
                 plt.imshow(modified_img)
                 plt.show()
-            if np.any(filter_im):
+            if filter_im is not None:
                 filter_im = np.array(filter_im*255).astype(np.uint8)
                 face_area = np.array(target_landmarks[0][[19, 25, 11, 6], :]).astype(np.float32)
-
-                # plt.imshow(modified_img)
-                # plt.scatter(face_area[:, 0], face_area[:, 1])
-                # plt.show()
 
                 face_area[:, 0] -= min(face_area[:, 0])
                 face_area[:, 1] -= min(face_area[:, 1])
@@ -102,9 +87,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 w = (np.max(face_area[:,1])).astype(np.int)
                 filter_im = resize(filter_im, (h + np.round(h * 0.3), w, filter_im.shape[2]))
 
-                # plt.imshow(filter_im)
-                # plt.scatter(face_area[:, 0], face_area[:, 1])
-                # plt.show()
 
                 filter_area = np.array([[0,0],[h, 0],[h, w], [0,w]]).astype(np.float32)
 
@@ -143,7 +125,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
         fig = plt.figure()
         plt.imshow(modified_img)
-        # plt.show()
+        #plt.show()
 
         canvas = plt.get_current_fig_manager().canvas
         agg = canvas.switch_backends(FigureCanvasAgg)
@@ -157,12 +139,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
         plt.close(fig)
 
         print "Frame", i
-
-
-        old_source_landmarks = source_landmarks
-        old_target_landmarks = target_landmarks
-
-
 
 
 # From https://stackoverflow.com/questions/37363875/matlab-transformpointsforward-equivalent-in-python

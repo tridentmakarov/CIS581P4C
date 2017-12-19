@@ -10,18 +10,17 @@ from imutils import face_utils
 
 predictor_path = "resources/shape_predictor_68_face_landmarks.dat"
 predictor = dlib.shape_predictor(predictor_path)
+detector = dlib.get_frontal_face_detector()
+
+def detect_face(gray):
+    return detector(gray, 1)
 
 def get_face_landmarks(image, debug=False):
-
-    if debug==True:
-        plt.imshow(image)
-        plt.show()
-    
-    detector = dlib.get_frontal_face_detector()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
     # detect faces in the grayscale image
-    rects = detector(gray, 1)
+    rects = detect_face(gray)
+
     im_shape = []
     locations = []
     # loop over the face detections
@@ -68,10 +67,11 @@ def align_source_face_to_target(source_im, target_im, tracked_points=None, opt_f
     transform.estimate(target_landmarks, source_landmarks)
     #transform.estimate(target_hull_points, source_hull_points)
 
+    source_mask = np.concatenate((source_im, np.full(source_im.shape[:2] + (1,), 255, dtype=np.uint8)), axis=2)
+    warped_source_mask = skimage.transform.warp(source_mask, transform, output_shape=target_im.shape[:2])
 
-    warp = skimage.transform.warp(source_im, transform, output_shape=target_im.shape[:2])
-    mask = skimage.transform.warp(np.full(source_im.shape[:2], 255, dtype=np.uint8), transform,
-                                  output_shape=target_im.shape[:2])
+    warp = warped_source_mask[:,:,:3]
+    mask = warped_source_mask[:,:,3]
     if debug:
         plt.imshow(warp)
         plt.show()

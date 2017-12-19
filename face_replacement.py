@@ -60,17 +60,7 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
         else:
             j += 1
 
-            target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(old_target, target, target_landmarks, None,
-                                                                  **lk_params)
-
-            if len(source_landmarks) == 0 and j!=1:
-                source_landmarks = old_source_landmarks
-
-            if len(target_landmarks) == 0 and j!=1:
-                pass
-
-
-            warped_source, mask = align_source_face_to_target(source, target, source_landmarks, target_landmarks)
+            warped_source, mask = align_source_face_to_target(source, target, current_points)
             modified_img = MPB(warped_source, None, mask, target)
             old_target = target
 

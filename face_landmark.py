@@ -34,7 +34,7 @@ def get_face_landmarks(image):
 
 
 #Based partly on http://www.learnopencv.com/face-morph-using-opencv-cpp-python/ and other articles on website
-def align_source_face_to_target(source_im, target_im, tracked_source, tracked_target, debug=False):
+def align_source_face_to_target(source_im, target_im, tracked_points=None, opt_flow_usage_factor=0.66, debug=False):
     # https: // www.pyimagesearch.com / 2017 / 04 / 03 / facial - landmarks - dlib - opencv - python /
 
     source_landmarks, source_locations = get_face_landmarks(source_im)
@@ -44,6 +44,12 @@ def align_source_face_to_target(source_im, target_im, tracked_source, tracked_ta
     target_landmarks = target_landmarks[0]
     #target_location = target_locations[0]
     #source_location = source_locations[0]
+
+    if tracked_points is not None:
+        pts = tracked_points["points"]
+        state = tracked_points['good_points']
+        target_landmarks[state] = (pts[state] * opt_flow_usage_factor) + \
+                      (target_landmarks[state] * (1 - opt_flow_usage_factor))
 
     if debug:
         plt.imshow(source_im)

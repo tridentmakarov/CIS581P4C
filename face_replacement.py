@@ -35,7 +35,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
     old_target = target
     old_gray = to_gray(target)
 
-    can_swap=0
+    can_swap = False
 
     old_source_landmarks = []
     old_target_landmarks = []
@@ -63,10 +63,12 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 current_points.append({"points":new_pts, "good_points": new_state})
         points_list.append(current_points)
 
-        if (len(source_landmarks) == 0 or len(target_landmarks) == 0) and can_swap == 0:
-            print "no faces found, skipping"
+        can_swap = (len(source_landmarks) != 0 and len(target_landmarks) != 0)
+
+        if not can_swap:
+            modified_img = target
         else:
-            can_swap =True
+            can_swap = True
 
             # target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(oldTarget, target, np.array(target_landmarks), None,
             #                                                       **lk_params)
@@ -87,18 +89,27 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 plt.show()
             if np.any(filter_im):
                 filter_im = np.array(filter_im*255).astype(np.uint8)
-                w, h = filter_im.shape[0], filter_im.shape[1]
-                filter_area = np.array([[0,0],[w, 0],[w, h], [0,w]]).astype(np.float32)
                 face_area = np.array(target_landmarks[0][[20, 25, 11, 7], :]).astype(np.float32)
+                face_area[:, 0] -= min(face_area[:, 0])
+                face_area[:, 1] -= min(face_area[:, 1])
+                w = (np.max(face_area[:,0])).astype(np.int)
+                h = (np.max(face_area[:,1])).astype(np.int)
+                filter_im = resize(filter_im, (w, h, filter_im.shape[2]))
+
+
+                filter_area = np.array([[0,0],[w, 0],[w, h], [0,w]]).astype(np.float32)
                 xR, yR, wR, hR = target_locations[0]
                 M = cv2.getPerspectiveTransform(face_area, filter_area)
-                filter_warp = cv2.warpPerspective(filter_im, M, (wR, hR))
+                filter_warp = cv2.warpPerspective(filter_im, M, (w+30,h))
 
-                for r in range(wR):
-                    for c in range(hR):
-                        modified_img[r + yR, c + xR, 0] = modified_img[r + yR, c + xR, 0] * (1-filter_warp[r, c, 3]) + filter_warp[r, c, 0] * (filter_warp[r, c, 3])
-                        modified_img[r + yR, c + xR, 1] = modified_img[r + yR, c + xR, 1] * (1-filter_warp[r, c, 3]) + filter_warp[r, c, 1] * (filter_warp[r, c, 3])
-                        modified_img[r + yR, c + xR, 2] = modified_img[r + yR, c + xR, 2] * (1-filter_warp[r, c, 3]) + filter_warp[r, c, 2] * (filter_warp[r, c, 3])
+                plt.imshow(filter_warp)
+                plt.show()
+
+                for r in range(h):
+                    for c in range(w):
+                        modified_img[r + yR, c + xR, 0] = modified_img[r + yR, c + xR, 0] * (255-filter_warp[r, c, 3]) + filter_warp[r, c, 0] * (filter_warp[r, c, 3])
+                        modified_img[r + yR, c + xR, 1] = modified_img[r + yR, c + xR, 1] * (255-filter_warp[r, c, 3]) + filter_warp[r, c, 1] * (filter_warp[r, c, 3])
+                        modified_img[r + yR, c + xR, 2] = modified_img[r + yR, c + xR, 2] * (255-filter_warp[r, c, 3]) + filter_warp[r, c, 2] * (filter_warp[r, c, 3])
 
 
             oldTarget = target
@@ -118,6 +129,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
         fig = plt.figure()
         plt.imshow(modified_img)
+        plt.show()
 
         canvas = plt.get_current_fig_manager().canvas
         agg = canvas.switch_backends(FigureCanvasAgg)

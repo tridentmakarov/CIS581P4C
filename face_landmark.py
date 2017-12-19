@@ -10,18 +10,17 @@ from imutils import face_utils
 
 predictor_path = "resources/shape_predictor_68_face_landmarks.dat"
 predictor = dlib.shape_predictor(predictor_path)
+detector = dlib.get_frontal_face_detector()
+
+def detect_face(gray):
+    return detector(gray, 1)
 
 def get_face_landmarks(image, debug=False):
-
-    if debug==True:
-        plt.imshow(image)
-        plt.show()
-    
-    detector = dlib.get_frontal_face_detector()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
     # detect faces in the grayscale image
-    rects = detector(gray, 1)
+    rects = detect_face(gray)
+
     im_shape = []
     locations = []
     # loop over the face detections

@@ -48,24 +48,23 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
         source_landmarks, source_locations = get_face_landmarks(source)
         target_landmarks, target_locations = get_face_landmarks(target)
 
-        # all_points_lost = [np.all(~points['good_points']) for points in points_list[-1]]
-        #
-        # if i % 25 == 0 or any(all_points_lost):
-        #     landmarks, locs = get_face_landmarks(target)
-        #     current_points = [{"points":landmarks, "good_points":np.ones(landmark.shape[0], dtype=bool)} for landmark in landmarks]
-        # else:
-        #     gray = to_gray(target)
-        #     current_points = []
-        #     for old_point in points_list[-1]:
-        #         new_pts = np.zeros_like(old_point["points"])
-        #         new_state = old_point["good_points"].copy()
-        #
-        #         new_pts[old_point["good_points"]], st, err = \
-        #             cv2.calcOpticalFlowPyrLK(old_gray, gray, old_point["points"][old_point["good_points"]], None)
-        #
-        #         new_state[old_point["good_points"]] = st == 1
-        #         current_points.append({"points": new_pts, "good_points": new_state})
-        # points_list.append(current_points)
+        gray = to_gray(target)
+
+        #Won't hit IndexError because i % 25 == 0 will trigger on first iteration.
+        if i % 25 == 0 or any([np.all(~points['good_points']) for points in points_list[-1]]):
+            current_points = [{"points":landmark, "good_points":np.ones(landmark.shape[0], dtype=bool)}
+                              for landmark in target_landmarks]
+        else:
+            current_points = []
+            for old_point in points_list[-1]:
+                new_pts = np.zeros_like(old_point["points"], dtype=np.float32)
+                new_state = old_point["good_points"].copy()
+                new_pts[old_point["good_points"]], st, err = \
+                    cv2.calcOpticalFlowPyrLK(old_gray, gray, old_point["points"][old_point["good_points"]].astype(np.float32)
+                                             , None, **lk_params)
+                new_state[old_point["good_points"]] = np.squeeze(st) == 1
+                current_points.append({"points":new_pts, "good_points": new_state})
+        points_list.append(current_points)
 
         if (len(source_landmarks) == 0 or len(target_landmarks) == 0) and j == 0:
             print "no faces found, skipping"
@@ -107,7 +106,11 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 warped_source, mask = align_source_face_to_target(source, target, points)
                 if warped_source is not None:
                     modified_img = MPB(warped_source, None, mask, modified_img)
+            if debug:
+                plt.imshow(modified_img)
+                plt.show()
             old_target = target
+            old_gray = gray
 
             # newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
 
@@ -188,13 +191,13 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
 
             '''SHOW FACE SWAPPED IMAGE'''
-
+            # fig = plt.figure()
+            # plt.imshow(modified_img)
+            # plt.show()
             #
 
             # # Creating video frame (this code was adapted from imageio.readthedocs.io)
-            '''
-            fig = plt.figure()
-            plt.imshow(modified_img)
+
             canvas = plt.get_current_fig_manager().canvas
             agg = canvas.switch_backends(FigureCanvasAgg)
             agg.draw()
@@ -204,8 +207,8 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             buf = np.fromstring(s, dtype=np.uint8)
             buf.shape = h, w, 3
             trackedVideo.append_data(buf)
-            plt.close(fig)
-            '''
+            plt.close('all')
+
             print "Frame", j
 
 

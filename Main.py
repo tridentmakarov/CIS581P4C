@@ -13,7 +13,6 @@ from matplotlib import pyplot as plt
 import face_replacement as face_rep
 import imageio
 import face_replacement
-from stabilize import stabilize
 
 
 

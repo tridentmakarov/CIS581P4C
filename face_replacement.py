@@ -42,9 +42,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
     points_list = []
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
-
-
-
         source_landmarks, source_locations = get_face_landmarks(source)
         target_landmarks, target_locations = get_face_landmarks(target)
 
@@ -80,10 +77,14 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             if len(target_landmarks) == 0:
                 target_landmarks = old_target_landmarks
 
-
-            warped_source, mask = align_source_face_to_target(source, target, source_landmarks, target_landmarks, tracked_points=None)
-            modified_img = MPB(warped_source, None, mask, target)
-
+            modified_img = target.copy()
+            for points in current_points:
+                warped_source, mask = align_source_face_to_target(source, target, points)
+                if warped_source is not None:
+                    modified_img = MPB(warped_source, None, mask, modified_img)
+            if debug:
+                plt.imshow(modified_img)
+                plt.show()
             if np.any(filter_im):
                 filter_im = np.array(filter_im*255).astype(np.uint8)
                 w, h = filter_im.shape[0], filter_im.shape[1]

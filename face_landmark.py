@@ -34,7 +34,7 @@ def get_face_landmarks(image):
 
 
 #Based partly on http://www.learnopencv.com/face-morph-using-opencv-cpp-python/ and other articles on website
-def align_source_face_to_target(source_im, target_im, debug=False):
+def align_source_face_to_target(source_im, target_im, tracked_source, tracked_target, debug=False):
     # https: // www.pyimagesearch.com / 2017 / 04 / 03 / facial - landmarks - dlib - opencv - python /
 
     source_landmarks, source_locations = get_face_landmarks(source_im)

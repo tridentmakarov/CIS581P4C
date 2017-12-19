@@ -6,7 +6,7 @@ from skimage import transform as transform
 from skimage.transform import resize
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from modified_poisson_blending import modified_poisson_blending as MPB
-from face_landmark import align_source_face_to_target
+from face_landmark import align_source_face_to_target, get_face_landmarks
 
 
 def detect_faces(img):
@@ -14,7 +14,7 @@ def detect_faces(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return face_cascade.detectMultiScale(gray, 1.3, 5)
 
-def face_replacement(source_vid, target_vid, out_filename, filterImg):
+def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=False):
 
     source = source_vid.get_data(0)
     target = target_vid.get_data(0)
@@ -57,7 +57,9 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
     oldTarget = target
 
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
-        warped_source, mask, location = align_source_face_to_target(source, target)
+        tracked_source = get_face_landmarks(source)
+        tracked_target = get_face_landmarks(target)
+        warped_source, mask, location = align_source_face_to_target(source, target, tracked_source, tracked_target)
         modified_img = MPB(warped_source, None, mask, target, location)
 
 
@@ -66,7 +68,7 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
         if i != 0:
             uint_oldTarget = oldTarget
             uint_newTarget = newTarget
-            targetFeaturesNew,  st, err = cv2.calcOpticalFlowPyrLK(uint_oldTarget, uint_newTarget, targetFeaturesOld, None, **lk_params)
+            targetFeaturesNew,  st, err = cv2.calcOpticalFlowPyrLK(oldTarget, newTarget, targetFeaturesOld, None, **lk_params)
 
             goodNew = targetFeaturesNew[st == 1]
             goodOld = targetFeaturesOld[st == 1]
@@ -80,24 +82,28 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg):
             tform3.estimate(newPointsT[:, 0, :], oldPointsT[:, 0, :])
             matrix = tform3._inv_matrix
 
-            bboxesOut = [forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2),
-                                                np.array(bboxPolygonTarget[:, 1], ndmin=2))
-                         for bboxPolygonTarget in bboxTarget]
-            # print out
-            bboxT = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
-            bboxTarget = np.array(bboxT)
-            # print bboxPolygonTarget
-            pts = np.round(bboxTarget.reshape((-1, 1, 2))).astype(np.int32)
+            
 
             '''SHOW THE BOUNDING BOX'''
-            # videoTarget = cv2.polylines(target, [pts], True, (0, 255, 255))
-            #plt.imshow(videoTarget)
-            #plt.show()
+            
+            if debug:
+                bboxesOut = [forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2),
+                                                    np.array(bboxPolygonTarget[:, 1], ndmin=2))
+                             for bboxPolygonTarget in bboxTarget]
+                
+                bboxT = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
+                bboxTarget = np.array(bboxT)
+                print bboxPolygonTarget
+                pts = np.round(bboxTarget.reshape((-1, 1, 2))).astype(np.int32)
+                
+                videoTarget = cv2.polylines(target, [pts], True, (0, 255, 255))
+                plt.imshow(videoTarget)
+                plt.show()
 
-            '''SHOW THE FEATURE POINTS'''
-            # plt.imshow(newTarget)
-            # plt.scatter(newPointsT[:, 0, 0] + xR, newPointsT[:, 0, 1] + yR)
-            # plt.show()
+                '''SHOW THE FEATURE POINTS'''
+                plt.imshow(newTarget)
+                plt.scatter(newPointsT[:, 0, 0] + xR, newPointsT[:, 0, 1] + yR)
+                plt.show()
 
             targetFeaturesOld = targetFeaturesNew
 

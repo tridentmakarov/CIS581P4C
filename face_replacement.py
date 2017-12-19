@@ -191,12 +191,11 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
 
             '''SHOW FACE SWAPPED IMAGE'''
-            # fig = plt.figure()
-            # plt.imshow(modified_img)
-            # plt.show()
-            #
 
-            # # Creating video frame (this code was adapted from imageio.readthedocs.io)
+            # Creating video frame (this code was adapted from imageio.readthedocs.io)
+
+            fig = plt.figure()
+            plt.imshow(modified_img)
 
             canvas = plt.get_current_fig_manager().canvas
             agg = canvas.switch_backends(FigureCanvasAgg)
@@ -207,7 +206,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             buf = np.fromstring(s, dtype=np.uint8)
             buf.shape = h, w, 3
             trackedVideo.append_data(buf)
-            plt.close('all')
+            plt.close(fig)
 
             print "Frame", j
 

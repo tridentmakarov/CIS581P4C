@@ -113,85 +113,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             old_target = target
             old_gray = gray
 
-            # newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
-
-
-
-
-
-            #     uint_oldTarget = old_target
-            #     uint_newTarget = newTarget
-
-            #
-            #     goodNew = targetFeaturesNew[st == 1]
-            #     goodOld = targetFeaturesOld[st == 1]
-            #
-            #     newPointsT = goodNew.reshape(-1, 1, 2)
-            #     oldPointsT = goodOld.reshape(-1, 1, 2)
-            #
-            #     useable = np.where(np.sqrt((newPointsT[:, 0, 0] - oldPointsT[:, 0, 0]) ** 2 + (newPointsT[:, 0, 1] - oldPointsT[:, 0, 1]) ** 2) < 4)
-            #
-            #     tform3 = transform.ProjectiveTransform()
-            #     tform3.estimate(newPointsT[:, 0, :], oldPointsT[:, 0, :])
-            #     matrix = tform3._inv_matrix
-            #
-            #
-            #
-            #     '''SHOW THE BOUNDING BOX'''
-            #
-            #     if debug:
-            #         bboxesOut = [forwardAffineTransform(matrix, np.array(bboxPolygonTarget[:, 0], ndmin=2),
-            #                                             np.array(bboxPolygonTarget[:, 1], ndmin=2))
-            #                      for bboxPolygonTarget in bboxTarget]
-            #
-            #         bboxT = [np.hstack([bboxOut[0], bboxOut[1]]) for bboxOut in bboxesOut]
-            #         bboxTarget = np.array(bboxT)
-            #         print bboxPolygonTarget
-            #         pts = np.round(bboxTarget.reshape((-1, 1, 2))).astype(np.int32)
-            #
-            #         videoTarget = cv2.polylines(target, [pts], True, (0, 255, 255))
-            #         plt.imshow(videoTarget)
-            #         plt.show()
-            #
-            #         '''SHOW THE FEATURE POINTS'''
-            #         plt.imshow(newTarget)
-            #         plt.scatter(newPointsT[:, 0, 0] + xR, newPointsT[:, 0, 1] + yR)
-            #         plt.show()
-            #
-            #     targetFeaturesOld = targetFeaturesNew
-            #
-            #     Ms = [cv2.getPerspectiveTransform(old.astype(np.float32), bboxTarget.astype(np.float32))
-            #          for old in old_bboxes]
-            #
-            #     sourceWarps = [cv2.warpPerspective(source, M, source.shape[1::-1]) for M in Ms]
-            #     sourceFaces = np.array([sourceWarp[y:y+h, x:x+w, :] for sourceWarp in sourceWarps])
-            #
-            #
-            #     '''SHOW THE FEATURE POINTS'''
-            #     for sourceF in sourceFaces:
-            #         pass
-            #         #plt.imshow(sourceF)
-            #         #plt.show()
-            #
-            #         warped_source, mask = align_source_face_to_target(source, target)
-            #         modified_img = MPB(warped_source, None, mask, target)
-            #         plt.imshow(modified_img)
-            #         plt.show()
-            #
-            #         # modified_img = MPB(face, target[yR - buf:yR+hR + buf, xR - buf:xR+wR + buf], im_mask, modified_img, xR, yR)
-            #         # if np.any(filterImg):
-            #         #     filter_warp = (transform.warp(filterImg[:, :, :], tform3, output_shape=filterImg.shape[1::-1]))
-            #         #     filter_warp[:, :, 0:2] *= 255
-            #         #
-            #         #     for i in range(wR):
-            #         #         for j in range(hR):
-            #         #             modified_img[i + yR, j + xR, 0] = modified_img[i + yR, j + xR, 0] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 0] * (filter_warp[i, j, 3])
-            #         #             modified_img[i + yR, j + xR, 1] = modified_img[i + yR, j + xR, 1] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 1] * (filter_warp[i, j, 3])
-            #         #             modified_img[i + yR, j + xR, 2] = modified_img[i + yR, j + xR, 2] * (1-filter_warp[i, j, 3]) + filter_warp[i, j, 2] * (filter_warp[i, j, 3])
-            #         #
-
-
-        '''SHOW FACE SWAPPED IMAGE'''
 
         # Creating video frame (this code was adapted from imageio.readthedocs.io)
 
@@ -209,7 +130,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
         trackedVideo.append_data(buf)
         plt.close(fig)
 
-        print "Frame", out_frame
+        print "Frame", i
 
 
         old_source_landmarks = source_landmarks

@@ -114,7 +114,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             for points in current_points:
                 warped_source, mask = align_source_face_to_target(source, target, points)
                 if warped_source is not None:
-                    modified_img = MPB(warped_source, None, mask, modified_img)
+                    modified_img = MPB(warped_source, mask, modified_img)
             if debug:
                 plt.imshow(modified_img)
                 plt.show()

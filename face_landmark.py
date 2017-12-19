@@ -42,12 +42,8 @@ def align_source_face_to_target(source_im, target_im, tracked_source, tracked_ta
 
     source_landmarks = source_landmarks[0]
     target_landmarks = target_landmarks[0]
-    target_location = target_locations[0]
-
-    #Use internal points
-    target_location = np.mean(target_landmarks[17:61], axis=0).astype(np.int)
-    print target_location
-    source_location = source_locations[0]
+    #target_location = target_locations[0]
+    #source_location = source_locations[0]
 
     if debug:
         plt.imshow(source_im)
@@ -75,4 +71,4 @@ def align_source_face_to_target(source_im, target_im, tracked_source, tracked_ta
         plt.show()
         plt.imshow(mask)
         plt.show()
-    return warp, mask, target_location
+    return warp, mask,

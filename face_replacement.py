@@ -120,8 +120,8 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
                 #plt.imshow(sourceF)
                 #plt.show()
 
-                warped_source, mask, location = align_source_face_to_target(source, target)
-                modified_img = MPB(warped_source, None, mask, target, location)
+                warped_source, mask = align_source_face_to_target(source, target)
+                modified_img = MPB(warped_source, None, mask, target)
                 plt.imshow(modified_img)
                 plt.show()
 

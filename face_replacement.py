@@ -8,6 +8,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from modified_poisson_blending import modified_poisson_blending as MPB
 from face_landmark import align_source_face_to_target, get_face_landmarks
 
+def to_gray(rgb_image):
+    return cv2.cvtColor(rgb_image, cv2.COLOR_RGB2GRAY)
 
 def detect_faces(img):
     face_cascade = cv2.CascadeClassifier('resources/haarcascade_frontalface_default.xml')
@@ -16,8 +18,8 @@ def detect_faces(img):
 
 def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=False):
 
-    source = source_vid.get_data(0)
-    target = target_vid.get_data(0)
+    source = next(source_vid)
+    target = next(target_vid)
 
     s_fps = source_vid._meta['fps']
     t_fps = target_vid._meta['fps']
@@ -28,14 +30,28 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
                      maxLevel=15,
                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
-    oldTarget = target
+    old_target = target
+    old_gray = to_gray(target)
+
     j=0
 
     old_source_landmarks = []
-
+    points = []
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
+        current_points = None
+        if i % 25 == 0:
+            landmarks = get_face_landmarks(target)
+            current_points = {"points":landmarks, "good_points":np.ones_like(landmarks, dtype=bool)}
+        else:
+            gray = to_gray(target)
+            old_point = points[-1]
+            new_pts = np.zeros_like(old_point["points"])
+            new_state = old_point["good_points"].copy()
 
-
+            new_pts[old_point["good_points"]], new_state[old_point["good_points"]], err = \
+                cv2.calcOpticalFlowPyrLK(old_gray, gray, old_point["points"][old_point["good_points"]], None)
+            current_points = {"points": new_pts, "good_points": new_state}
+        points.append(current_points)
 
         source_landmarks, source_locations = get_face_landmarks(source)
         target_landmarks, target_locations = get_face_landmarks(target)
@@ -44,19 +60,19 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
         else:
             j += 1
 
-            target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(oldTarget, target, target_landmarks, None,
+            target_landmarks_flow, st, err = cv2.calcOpticalFlowPyrLK(old_target, target, target_landmarks, None,
                                                                   **lk_params)
 
             if len(source_landmarks) == 0 and j!=1:
                 source_landmarks = old_source_landmarks
 
             if len(target_landmarks) == 0 and j!=1:
-
+                pass
 
 
             warped_source, mask = align_source_face_to_target(source, target, source_landmarks, target_landmarks)
             modified_img = MPB(warped_source, None, mask, target)
-            oldTarget = target
+            old_target = target
 
             # newTarget = cv2.cvtColor(np.uint8(target * 255), cv2.COLOR_BGR2GRAY)
 
@@ -64,7 +80,7 @@ def face_replacement(source_vid, target_vid, out_filename, filterImg, debug=Fals
 
 
 
-            #     uint_oldTarget = oldTarget
+            #     uint_oldTarget = old_target
             #     uint_newTarget = newTarget
 
             #

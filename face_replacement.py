@@ -89,31 +89,46 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 plt.show()
             if np.any(filter_im):
                 filter_im = np.array(filter_im*255).astype(np.uint8)
-                face_area = np.array(target_landmarks[0][[20, 25, 11, 7], :]).astype(np.float32)
+                face_area = np.array(target_landmarks[0][[19, 25, 11, 6], :]).astype(np.float32)
+
+                # plt.imshow(modified_img)
+                # plt.scatter(face_area[:, 0], face_area[:, 1])
+                # plt.show()
+
                 face_area[:, 0] -= min(face_area[:, 0])
                 face_area[:, 1] -= min(face_area[:, 1])
-                w = (np.max(face_area[:,0])).astype(np.int)
-                h = (np.max(face_area[:,1])).astype(np.int)
-                filter_im = resize(filter_im, (w, h, filter_im.shape[2]))
+                h = (np.max(face_area[:,0])).astype(np.int)
+                h += np.round(h * 0.3).astype(np.int)
+                w = (np.max(face_area[:,1])).astype(np.int)
+                filter_im = resize(filter_im, (h + np.round(h * 0.3), w, filter_im.shape[2]))
+
+                # plt.imshow(filter_im)
+                # plt.scatter(face_area[:, 0], face_area[:, 1])
+                # plt.show()
+
+                filter_area = np.array([[0,0],[h, 0],[h, w], [0,w]]).astype(np.float32)
+
+                M = cv2.getPerspectiveTransform(filter_area, face_area)
+                # h += np.round(h * 0.3).astype(np.int)
+                filter_warp_uncropped = cv2.warpPerspective(filter_im, M, (w, h))
+
+                r_crop, c_crop = np.where(filter_warp_uncropped[:, :, 0] != 0)
+                filter_warp = filter_warp_uncropped[np.min(r_crop) : np.max(r_crop), np.min(c_crop) : np.max(c_crop)]
 
 
-                filter_area = np.array([[0,0],[w, 0],[w, h], [0,w]]).astype(np.float32)
+                filter_warp = resize(filter_warp, (np.round(filter_warp.shape[0]*1.5), np.round(filter_warp.shape[1]*2), filter_warp.shape[2]))
                 xR, yR, wR, hR = target_locations[0]
-                M = cv2.getPerspectiveTransform(face_area, filter_area)
-                filter_warp = cv2.warpPerspective(filter_im, M, (w+30,h))
+                yR -= 60
 
-                plt.imshow(filter_warp)
-                plt.show()
+                r = filter_warp.shape[0]
+                c = filter_warp.shape[1]
 
-                for r in range(h):
-                    for c in range(w):
-                        modified_img[r + yR, c + xR, 0] = modified_img[r + yR, c + xR, 0] * (255-filter_warp[r, c, 3]) + filter_warp[r, c, 0] * (filter_warp[r, c, 3])
-                        modified_img[r + yR, c + xR, 1] = modified_img[r + yR, c + xR, 1] * (255-filter_warp[r, c, 3]) + filter_warp[r, c, 1] * (filter_warp[r, c, 3])
-                        modified_img[r + yR, c + xR, 2] = modified_img[r + yR, c + xR, 2] * (255-filter_warp[r, c, 3]) + filter_warp[r, c, 2] * (filter_warp[r, c, 3])
+                modified_img[yR: r + yR, xR: c + xR, 0] = modified_img[yR: r + yR, xR: c + xR, 0] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 0] * 255 * (filter_warp[0:r, 0:c, 3])
+                modified_img[yR: r + yR, xR: c + xR, 1] = modified_img[yR: r + yR, xR: c + xR, 1] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 1] * 255 * (filter_warp[0:r, 0:c, 3])
+                modified_img[yR: r + yR, xR: c + xR, 2] = modified_img[yR: r + yR, xR: c + xR, 2] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 2] * 255 * (filter_warp[0:r, 0:c, 3])
 
 
             oldTarget = target
-            modified_img = target.copy()
             for points in current_points:
                 warped_source, mask = align_source_face_to_target(source, target, points)
                 if warped_source is not None:
@@ -121,7 +136,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             if debug:
                 plt.imshow(modified_img)
                 plt.show()
-            old_target = target
             old_gray = gray
 
 
@@ -129,7 +143,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
         fig = plt.figure()
         plt.imshow(modified_img)
-        plt.show()
+        # plt.show()
 
         canvas = plt.get_current_fig_manager().canvas
         agg = canvas.switch_backends(FigureCanvasAgg)

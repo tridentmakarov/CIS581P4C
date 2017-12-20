@@ -145,6 +145,9 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im_orig, debug
         trackedVideo.append_data(buf)
         plt.close()
 
+        if i % 9 == 0:
+            print "debug"
+
         print "Frame", i
 
 

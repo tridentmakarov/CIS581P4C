@@ -13,4 +13,4 @@ def modified_poisson_blending(source_face, mask, original_target):
 
     center = (np.mean([np.max(unmasked_pixels_x), np.min(unmasked_pixels_x)]).astype(int),
               np.mean([np.max(unmasked_pixels_y), np.min(unmasked_pixels_y)]).astype(int))
-    return cv2.seamlessClone(source_face, original_target, mask, center, cv2.MIXED_CLONE)
+    return cv2.seamlessClone(source_face, original_target, mask, center, cv2.NORMAL_CLONE)

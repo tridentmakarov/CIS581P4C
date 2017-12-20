@@ -60,12 +60,12 @@ def align_source_face_to_target(source_im, target_im, tracked_points=None, opt_f
 
     source_convex_hull = cv2.convexHull(source_landmarks, returnPoints = False)
     target_convex_hull = source_convex_hull
-    # source_hull_points = np.squeeze(source_landmarks[source_convex_hull])
-    # target_hull_points = np.squeeze(target_landmarks[target_convex_hull])
+    source_hull_points = np.squeeze(source_landmarks[source_convex_hull])
+    target_hull_points = np.squeeze(target_landmarks[target_convex_hull])
 
     transform = skimage.transform.PiecewiseAffineTransform()
-    transform.estimate(target_landmarks, source_landmarks)
-    #transform.estimate(target_hull_points, source_hull_points)
+    # transform.estimate(target_landmarks, source_landmarks)
+    transform.estimate(target_hull_points, source_hull_points)
 
     source_mask = np.concatenate((source_im, np.full(source_im.shape[:2] + (1,), 255, dtype=np.uint8)), axis=2)
     warped_source_mask = skimage.transform.warp(source_mask, transform, output_shape=target_im.shape[:2])

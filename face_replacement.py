@@ -18,7 +18,7 @@ def detect_faces(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return face_cascade.detectMultiScale(gray, 1.3, 5)
 
-def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=False):
+def face_replacement(source_vid, target_vid, out_filename, filter_im_orig, debug=False):
 
     source = source_vid.get_next_data()
     target = target_vid.get_next_data()
@@ -37,7 +37,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
     points_list = []
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
 
-        if i == 89:
+        if i == 79:
             print "bug"
 
 
@@ -78,8 +78,8 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
             if debug:
                 plt.imshow(modified_img)
                 plt.show()
-            if filter_im is not None:
-                filter_im = np.array(filter_im*255).astype(np.uint8)
+            if filter_im_orig is not None:
+                filter_im = np.array(filter_im_orig*255).astype(np.uint8)
                 face_area = np.array(target_landmarks[0][[19, 25, 11, 6], :]).astype(np.float32)
 
                 face_area[:, 0] -= min(face_area[:, 0])
@@ -104,13 +104,15 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 xR, yR, wR, hR = target_locations[0]
                 yR -= 60
 
+                yR = max(0, yR)
+
                 r = filter_warp.shape[0]
                 c = filter_warp.shape[1]
 
                 if (r + yR) >= modified_img.shape[0]:
-                    r = (yR - modified_img.shape[0])
+                    r = (modified_img.shape[0] - yR)
                 if (c + xR) >= modified_img.shape[1]:
-                    c = (xR - modified_img.shape[1])
+                    c = (modified_img.shape[1] - xR)
 
                 modified_img[yR: r + yR, xR: c + xR, 0] = modified_img[yR: r + yR, xR: c + xR, 0] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 0] * 255 * (filter_warp[0:r, 0:c, 3])
                 modified_img[yR: r + yR, xR: c + xR, 1] = modified_img[yR: r + yR, xR: c + xR, 1] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 1] * 255 * (filter_warp[0:r, 0:c, 3])

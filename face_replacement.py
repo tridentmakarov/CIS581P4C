@@ -73,9 +73,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im_orig, debug
                 warped_source, mask = align_source_face_to_target(source, target, points)
                 if warped_source is not None:
                     modified_img = MPB(warped_source, mask, modified_img)
-            if debug:
-                plt.imshow(modified_img)
-                plt.show()
+
             if filter_im_orig is not None:
                 filter_im = np.array(filter_im_orig*255).astype(np.uint8)
                 face_area = np.array(target_landmarks[0][[19, 25, 11, 6], :]).astype(np.float32)
@@ -116,12 +114,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im_orig, debug
                 modified_img[yR: r + yR, xR: c + xR, 1] = modified_img[yR: r + yR, xR: c + xR, 1] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 1] * 255 * (filter_warp[0:r, 0:c, 3])
                 modified_img[yR: r + yR, xR: c + xR, 2] = modified_img[yR: r + yR, xR: c + xR, 2] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 2] * 255 * (filter_warp[0:r, 0:c, 3])
 
-
-            oldTarget = target
-            for points in current_points:
-                warped_source, mask = align_source_face_to_target(source, target, points)
-                if warped_source is not None:
-                    modified_img = MPB(warped_source, mask, modified_img)
             if debug:
                 plt.imshow(modified_img)
                 plt.show()

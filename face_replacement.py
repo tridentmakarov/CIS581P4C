@@ -34,10 +34,13 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
     old_gray = to_gray(target)
 
-    can_swap = False
-
     points_list = []
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
+
+        if i == 89:
+            print "bug"
+
+
         #source_landmarks, source_locations = get_face_landmarks(source)
         target_landmarks, target_locations = get_face_landmarks(target)
 
@@ -66,7 +69,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
         if not can_swap:
             modified_img = target
         else:
-            can_swap = True
 
             modified_img = target.copy()
             for points in current_points:
@@ -105,6 +107,11 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
                 r = filter_warp.shape[0]
                 c = filter_warp.shape[1]
 
+                if (r + yR) >= modified_img.shape[0]:
+                    r = (yR - modified_img.shape[0])
+                if (c + xR) >= modified_img.shape[1]:
+                    c = (xR - modified_img.shape[1])
+
                 modified_img[yR: r + yR, xR: c + xR, 0] = modified_img[yR: r + yR, xR: c + xR, 0] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 0] * 255 * (filter_warp[0:r, 0:c, 3])
                 modified_img[yR: r + yR, xR: c + xR, 1] = modified_img[yR: r + yR, xR: c + xR, 1] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 1] * 255 * (filter_warp[0:r, 0:c, 3])
                 modified_img[yR: r + yR, xR: c + xR, 2] = modified_img[yR: r + yR, xR: c + xR, 2] * (1 - filter_warp[0:r, 0:c, 3]) + filter_warp[0:r, 0:c, 2] * 255 * (filter_warp[0:r, 0:c, 3])
@@ -125,7 +132,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
 
         fig = plt.figure()
         plt.imshow(modified_img)
-        #plt.show()
+        # plt.show()
 
         canvas = plt.get_current_fig_manager().canvas
         agg = canvas.switch_backends(FigureCanvasAgg)
@@ -136,7 +143,7 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im, debug=Fals
         buf = np.fromstring(s, dtype=np.uint8)
         buf.shape = h, w, 3
         trackedVideo.append_data(buf)
-        plt.close(fig)
+        plt.close()
 
         print "Frame", i
 

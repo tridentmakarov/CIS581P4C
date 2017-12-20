@@ -22,11 +22,11 @@ out_filename = "resources/OutputVideo.mp4"
 filterIm1 = plt.imread("resources/CatEars.png")
 
 print "loaded"
-face_replacement.face_replacement(video1, video2, out_filename, filter_im=filterIm1, debug=True)
+face_replacement.face_replacement(video1, video2, out_filename, filterIm1, debug=True)
 
 def run_face_replacement_no_exceptions(video1, video2, out_filename):
     try:
-        face_replacement.face_replacement(video1, video2, out_filename, filter_im=filterIm1, debug=False)
+        face_replacement.face_replacement(video1, video2, out_filename, filterIm1, debug=False)
     except:
         return
 

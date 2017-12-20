@@ -37,5 +37,5 @@ for i in range(0,5):
             print "Video %d with video %d" % (i, j)
             video1 = imageio.get_reader(videolist[i])
             video2 = imageio.get_reader(videolist[j])
-            f_name = "resources/OutputVideo_%d_%d.mp4" % (i, j)
+            f_name = "output/OutputVideo_%d_%d.mp4" % (i, j)
             run_face_replacement_no_exceptions(video1, video2, filter, f_name)

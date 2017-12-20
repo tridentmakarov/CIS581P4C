@@ -37,7 +37,7 @@ def get_face_landmarks(image, debug=False):
 
 
 #Based partly on http://www.learnopencv.com/face-morph-using-opencv-cpp-python/ and other articles on website
-def align_source_face_to_target(source_im, target_im, tracked_points, opt_flow_usage_factor=0.66, debug=True):    # https: // www.pyimagesearch.com / 2017 / 04 / 03 / facial - landmarks - dlib - opencv - python /
+def align_source_face_to_target(source_im, target_im, tracked_points, opt_flow_usage_factor=0.66, debug=False):    # https: // www.pyimagesearch.com / 2017 / 04 / 03 / facial - landmarks - dlib - opencv - python /
     source_landmarks, source_locations = get_face_landmarks(source_im)
     target_landmarks, target_locations = get_face_landmarks(target_im)
     if source_landmarks.size == 0 or target_landmarks.size == 0:
@@ -68,8 +68,8 @@ def align_source_face_to_target(source_im, target_im, tracked_points, opt_flow_u
     target_hull_points = np.squeeze(target_landmarks[target_convex_hull])
 
     transform = skimage.transform.PiecewiseAffineTransform()
-    # transform.estimate(target_landmarks, source_landmarks)
-    transform.estimate(target_hull_points, source_hull_points)
+    transform.estimate(target_landmarks, source_landmarks)
+    # transform.estimate(target_hull_points, source_hull_points)
 
     source_mask = np.concatenate((source_im, np.full(source_im.shape[:2] + (1,), 255, dtype=np.uint8)), axis=2)
     warped_source_mask = skimage.transform.warp(source_mask, transform, output_shape=target_im.shape[:2])

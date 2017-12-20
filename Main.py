@@ -14,15 +14,15 @@ import face_replacement as face_rep
 import imageio
 import face_replacement
 
-videolist = ["resources/Easy/FrankUnderwood.mp4", "resources/Easy/JonSnow.mp4", "resources/Easy/MrRobot.mp4", "resources/MarquesBrownlee.mp4", "resources/TheMartian.mp4"
+videolist = ["resources/Easy/FrankUnderwood.mp4", "resources/Easy/JonSnow.mp4", "resources/Easy/MrRobot.mp4", "resources/MarquesBrownlee.mp4", "resources/TheMartian.mp4",
              "resources/Medium/LucianoRosso1.mp4", "resources/Medium/LucianoRosso2.mp4", "resources/Medium/LucianoRosso3.mp4",
              "resources/Hard/Joker.mp4", "resources/Hard/LeonardoDiCaprio.mp4", "resources/Trump.mp4"]
 
 
-video1 = imageio.get_reader("resources/Medium/LucianoRosso1.mp4")
-video2 = imageio.get_reader("resources/Easy/MrRobot.mp4")
+# video1 = imageio.get_reader("resources/Easy/FrankUnderwood.mp4")
+# video2 = imageio.get_reader("resources/Medium/LucianoRosso1.mp4")
 f_name = "resources/OutputVideoRedo%d_%d.mp4" % (2, 1)
-face_replacement.face_replacement(video1, video2, f_name, None, debug=False)
+# face_replacement.face_replacement(video1, video2, f_name, None, debug=False)
 
 # out_filename = "resources/OutputVideo.mp4"
 filterIm1 = plt.imread("resources/CatEars.png")

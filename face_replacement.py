@@ -37,8 +37,6 @@ def face_replacement(source_vid, target_vid, out_filename, filter_im_orig, debug
     points_list = []
     for i, (source, target) in enumerate(zip(source_vid, target_vid)):
 
-        if i == 79:
-            print "bug"
 
 
         #source_landmarks, source_locations = get_face_landmarks(source)
